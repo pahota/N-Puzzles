@@ -24,9 +24,9 @@
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="Img/ScreenLight.png" width="30%">
-  <img src="Img/ScreenDark.png" width="30%">
-  <img src="Img/ScreenColorful.png" width="30%">
+  <img src="Img/light.png" width="30%">
+  <img src="Img/dark.png" width="30%">
+  <img src="Img/colorful.png" width="30%">
 </p>
 
 ---
