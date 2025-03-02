@@ -2,90 +2,76 @@
 
 ![N-Puzzles Logo](images/logo.png)
 
-**N-Puzzles** — стильная и функциональная реализация классической игры «Пятнашки», созданная с использованием **Qt Quick (QML) и C++**.
+**N-Puzzles** is a stylish and feature-rich implementation of the classic "15 Puzzle" game, developed using **Qt Quick (QML) and C++**.
 
 ---
 
-## 🚀 Актуальная версия: **0.7.2.7**
+## 🚀 Latest Version: **0.7.2.7**
 
-**Разработчик:** [pahota](https://t.me/pahota_0) из **SmaktaTeam**
-
----
-
-## 🎮 Особенности
-
-✔ **Два языка интерфейса** (Русский 🇷🇺 / English 🇬🇧)  
-✔ **Три темы оформления** (Светлая, Тёмная, Цветная)  
-✔ **Интуитивный интерфейс** с плавными анимациями  
-✔ **Интерактивные настройки** для кастомизации  
+**Developer:** [pahota](https://t.me/pahota_0) from **SmaktaTeam**
 
 ---
 
-## 📸 Скриншоты
+## 🎮 Features
 
-<div style="display: flex; justify-content: space-between;">
+✔ **Dual-language interface** (Russian 🇷🇺 / English 🇬🇧)  
+✔ **Three UI themes** (Light, Dark, Colorful)  
+✔ **Intuitive UI** with smooth animations  
+✔ **Interactive settings** for full customization  
+
+---
+
+## 📸 Screenshots
+
+<p align="center">
   <img src="Img/ScreenLight.png" width="30%">
   <img src="Img/ScreenDark.png" width="30%">
   <img src="Img/ScreenColorful.png" width="30%">
-</div>
-
-
----
-
-## 🔮 Планируемые обновления
-
-🔹 **Система оценивания** (рейтинг игроков, рекорды)  
-🔹 **Авторизация** (вход в аккаунт)  
-🔹 **Новые настройки и кастомизация**  
-🔹 **Исправление найденных багов**  
-🔹 **Дополнительные темы оформления**  
+</p>
 
 ---
 
-## 📥 Установка
+## 🔮 Upcoming Updates
 
-### 🖥 Запуск на Windows
-1. Скачайте последнюю версию из [раздела релизов](https://github.com/SmaktaTeam/N-Puzzles/releases)
-2. Распакуйте архив
-3. Запустите **N-Puzzles**
+🔹 **Scoring system** (player rankings, records)  
+🔹 **User authentication** (account login)  
+🔹 **More customization options**  
+🔹 **Bug fixes and optimizations**  
+🔹 **Additional UI themes**  
 
-### 🛠 Сборка из исходников
-#### Требования:
+---
+
+## 📥 Installation
+
+### 🖥 Running on Windows
+1. Download the latest version from the [Releases section](https://github.com/SmaktaTeam/N-Puzzles/releases)
+2. Extract the archive
+3. Run **N-Puzzles**
+
+### 🛠 Building from Source
+#### Requirements:
 - **Qt 6+**
 - **CMake**
-- **Компилятор C++**
+- **C++ Compiler**
 
-```sh
-# Клонирование репозитория
-git clone https://github.com/SmaktaTeam/N-Puzzles.git
-cd N-Puzzles
-
-# Сборка и запуск
-mkdir build && cd build
-cmake ..
-make
-./N-Puzzles
-```
 
 ---
 
-## 🛠 Используемые технологии
+## 🛠 Technologies Used
 
 - **Qt Quick (QML) + C++**
-- **CMake** для сборки
-- **OpenGL** для рендеринга анимаций
+- **CMake** for building
 
 ---
 
-## 📜 Лицензия
-Проект распространяется под лицензией **MIT**.
+## 📜 License
+This project is licensed under the **MIT License**.
 
 ---
 
-## 💬 Обратная связь
+## 💬 Feedback & Contact
 
-📢 **Связаться с разработчиком:**  
-- Telegram: [pahota_0](https://t.me/pahota_0)
-- GitHub Issues: [Создать обращение](https://github.com/pahota/N-Puzzles/issues)
-
+📢 **Get in touch with the developer:**  
+- Telegram: [pahota_0](https://t.me/pahota_0)  
+- GitHub Issues: [Create an issue](https://github.com/pahota/N-Puzzles/issues)  
 
