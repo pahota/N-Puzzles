@@ -23,9 +23,11 @@
 
 ## 📸 Скриншоты
 
-<img src="Img/ScreenLight.png" width="45%">
-<img src="Img/ScreenDark.png" width="45%">
-<img src="Img/ScreenColorful.png" width="45%">
+<div style="display: flex; justify-content: space-between;">
+  <img src="Img/ScreenColorful.png" width="30%">
+  <img src="Img/ScreenColorful.png" width="30%">
+  <img src="Img/ScreenColorful.png" width="30%">
+</div>
 
 
 ---
