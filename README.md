@@ -24,6 +24,12 @@
 ## 📸 Screenshots
 
 <p align="center">
+  <img src="Img/mainMenyLight.png" width="30%">
+  <img src="Img/settigns.png" width="30%">
+  <img src="Img/mainMenuColorfulpng.png" width="30%">
+</p>
+
+<p align="center">
   <img src="Img/light.png" width="30%">
   <img src="Img/dark.png" width="30%">
   <img src="Img/colorful.png" width="30%">
