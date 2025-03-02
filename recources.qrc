@@ -1,0 +1,38 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Img/Icons/app_icon.png</file>
+        <file>Img/Icons/closeButton.png</file>
+        <file>Img/Icons/settingsIcon/settingsDark.svg</file>
+        <file>Img/Icons/settingsIcon/settingsLight.svg</file>
+        <file>Img/Icons/pauseIcons/linksPause.txt</file>
+        <file>Img/Icons/pauseIcons/pauseDark.svg</file>
+        <file>Img/Icons/pauseIcons/pauseLight.svg</file>
+        <file>Img/Icons/pauseIcons/playDark.svg</file>
+        <file>Img/Icons/pauseIcons/playLight.svg</file>
+        <file>Img/Icons/restartIcons/linksRestart.txt</file>
+        <file>Img/Icons/restartIcons/restartDark.svg</file>
+        <file>Img/Icons/restartIcons/restartLight.svg</file>
+        <file>Img/Icons/timerIcons/linksTimer.txt</file>
+        <file>Img/Icons/timerIcons/timerPauseColorful.svg</file>
+        <file>Img/Icons/timerIcons/timerPauseDark.svg</file>
+        <file>Img/Icons/timerIcons/timerPauseLight.svg</file>
+        <file>Img/Icons/timerIcons/timerPlayColorful.svg</file>
+        <file>Img/Icons/timerIcons/timerPlayDark.svg</file>
+        <file>Img/Icons/timerIcons/timerPlayLight.svg</file>
+        <file>Img/Icons/stepsIcons/linksSteps.txt</file>
+        <file>Img/Icons/stepsIcons/stepsColorful.svg</file>
+        <file>Img/Icons/stepsIcons/stepsDark.svg</file>
+        <file>Img/Icons/stepsIcons/stepsLight.svg</file>
+        <file>Img/GamePlay.png</file>
+        <file>Img/Icons/aboutGameIcons/aboutGameDark.svg</file>
+        <file>Img/Icons/aboutGameIcons/aboutgameLight.svg</file>
+        <file>Img/ScreenColorful.png</file>
+        <file>Img/ScreenDark.png</file>
+        <file>Img/ScreenLight.png</file>
+        <file>Img/Icons/menuIcons/menuDark.svg</file>
+        <file>Img/Icons/menuIcons/menuLight.svg</file>
+        <file>Img/sound.mp3</file>
+        <file>Img/defaultAvatar.png</file>
+        <file>Sounds/soundIntellect.mp3</file>
+    </qresource>
+</RCC>
