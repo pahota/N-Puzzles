@@ -25,7 +25,7 @@
 
 <p align="center">
   <img src="Img/mainMenyLight.png" width="30%">
-  <img src="Img/settigns.png" width="30%">
+  <img src="Img/settings.png" width="30%">
   <img src="Img/mainMenuColorfulpng.png" width="30%">
 </p>
 
