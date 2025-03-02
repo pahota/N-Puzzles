@@ -23,8 +23,10 @@
 
 ## 📸 Скриншоты
 
-<img src="images/screenshot1.png" width="45%"> <img src="images/screenshot2.png" width="45%">
-<img src="images/screenshot3.png" width="45%">
+<img src="Img/ScreenLight.png" width="45%">
+<img src="Img/ScreenDark.png" width="45%">
+<img src="Img/ScreenColorful.png" width="45%">
+
 
 ---
 
