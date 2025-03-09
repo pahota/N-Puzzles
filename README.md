@@ -1,25 +1,36 @@
 # N-Puzzles
 
-![N-Puzzles Logo](images/logo.png)
+<p align="center">
+  <img src="Img/logo.png" alt="N-Puzzles Logo" width="200"/>
+</p>
 
-**N-Puzzles** is a stylish and feature-rich implementation of the classic "15 Puzzle" game, developed using **Qt Quick (QML) and C++**.
+<p align="center">
+  <b>An elegant, modern implementation of the classic sliding puzzle game for desktop platforms</b>
+</p>
 
----
+<p align="center">
+  Built with Qt Quick (QML) and C++ to deliver the ultimate sliding puzzle experience
+</p>
 
-## 🚀 Latest Version: **0.7.2.7**
+## 🎮 Project Goal
 
-**Developer:** [pahota](https://t.me/pahota_0) from **SmaktaTeam**
+N-Puzzles reimagines the classic "15 puzzle" with modern design principles and engaging features. Our focus is on creating the most visually appealing and smoothly animated sliding puzzle game available for desktop, with competitive gameplay elements that encourage friendly competition.
 
----
+## ✨ Features
 
-## 🎮 Features
+### Core Gameplay
+* 🎲 Multiple difficulty levels (3×3 to 6×6 grids)
+* 🎯 Intuitive drag-and-drop controls
+* 🔄 Game control buttons (restart, pause)
+* ⏱️ Move counter and timer display
+* 🏆 Basic scoring system
 
-✔ **Dual-language interface** (Russian 🇷🇺 / English 🇬🇧)  
-✔ **Three UI themes** (Light, Dark, Colorful)  
-✔ **Intuitive UI** with smooth animations  
-✔ **Interactive settings** for full customization  
-
----
+### Enhanced Experience
+* 🎨 Visually appealing modern interface
+* 🌓 Three beautiful themes (Light, Dark, Colorful)
+* 🔊 Sound effects and background music
+* 🌐 Dual-language support (English/Russian)
+* ✨ Smooth animations and transitions
 
 ## 📸 Screenshots
 
@@ -35,49 +46,46 @@
   <img src="Img/colorful.png" width="30%">
 </p>
 
----
+## 🚀 Getting Started
 
-## 🔮 Upcoming Updates
+### Prerequisites
+* Qt 6.0 or higher
+* CMake 3.14+
+* C++17 compatible compiler
 
-🔹 **Scoring system** (player rankings, records)  
-🔹 **User authentication** (account login)  
-🔹 **More customization options**  
-🔹 **Bug fixes and optimizations**  
-🔹 **Additional UI themes**  
+### Installation
 
----
+#### Windows
+1. Download the latest release from the Releases page
+2. Extract the archive to your preferred location
+3. Run `N-Puzzles.exe`
 
-## 📥 Installation
+## 🛣️ Roadmap
+* 🏆 Enhanced scoring system with global leaderboards
+* 👤 User profiles and authentication
+* 🎮 Additional gameplay modes
+* 🎨 More customization options
+* 🔧 Performance optimizations
 
-### 🖥 Running on Windows
-1. Download the latest version from the [Releases section](https://github.com/SmaktaTeam/N-Puzzles/releases)
-2. Extract the archive
-3. Run **N-Puzzles**
+## 🚧 Known Issues
 
-### 🛠 Building from Source
-#### Requirements:
-- **Qt 6+**
-- **CMake**
-- **C++ Compiler**
+### Current limitations (to be fixed in release 1.0):
+* **Audio settings**: The sound settings system works incorrectly, with possible issues in volume adjustment and enabling/disabling sound effects
+* **Display settings**: Some UI elements may not scale correctly on certain displays
+* **Authorization system**: The current implementation of the user authorization system is not fully functional and requires further development
+* **Scoring system**: The scoring system needs enhancement for better competitive experience
+* Occasional audio glitches in the sound effects
+* Settings may not always save correctly between sessions
 
+We're actively working on resolving these issues in upcoming releases!
 
----
+## 📝 License
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🛠 Technologies Used
+## 📬 Contact
+* Telegram: [@pahota_0](https://t.me/pahota_0)
+* Email: pyakhota1@gmail.com
 
-- **Qt Quick (QML) + C++**
-- **CMake** for building
-
----
-
-## 📜 License
-This project is licensed under the **MIT License**.
-
----
-
-## 💬 Feedback & Contact
-
-📢 **Get in touch with the developer:**  
-- Telegram: [pahota_0](https://t.me/pahota_0)  
-- GitHub Issues: [Create an issue](https://github.com/pahota/N-Puzzles/issues)  
-
+<p align="center">
+  <b>Created with ❤️ by beginner Qt desktop developer pahota from SmaktaTeam</b>
+</p>
