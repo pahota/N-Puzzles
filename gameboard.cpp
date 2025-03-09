@@ -27,17 +27,33 @@ bool isAdjacent(const GameBoard::Position f, const GameBoard::Position s) {
 }
 }
 
-GameBoard::GameBoard(const size_t boardDimension, QObject* parent)
-    : QAbstractListModel{parent},
-    m_dimension{boardDimension},
-    m_boardSize{m_dimension * m_dimension}
+GameBoard::GameBoard(QObject* parent)
+    : QAbstractListModel{parent}
 {
+    resetBoard();
+}
+
+void GameBoard::resetBoard() {
+    beginResetModel();
+    m_boardSize = m_dimension * m_dimension;
     m_rawBoard.resize(m_boardSize);
     for(size_t i = 0; i < m_boardSize; ++i) {
         m_rawBoard[i].value = i + 1;
     }
+    m_counter = 0;
     shuffle();
     updateTilePositions();
+    endResetModel();
+    emit counterChanged();
+    emit boardSizeChanged();
+}
+
+void GameBoard::setDimension(size_t dimension) {
+    if (m_dimension != dimension) {
+        m_dimension = dimension;
+        resetBoard();
+        emit dimensionChanged();
+    }
 }
 
 bool GameBoard::move(int index) {
@@ -57,9 +73,24 @@ bool GameBoard::move(int index) {
 
     std::swap(hiddenElementIterator->value, m_rawBoard[index].value);
     updateTilePositions();
-    emit dataChanged(createIndex(0, 0), createIndex(m_boardSize, 0));
+    m_counter++;
+    emit counterChanged();
+    emit dataChanged(createIndex(0, 0), createIndex(m_boardSize - 1, 0));
+
+    if (checkWin()) {
+        emit gameWon();
+    }
 
     return true;
+}
+
+bool GameBoard::checkWin() const {
+    for(size_t i = 0; i < m_boardSize - 1; ++i) {
+        if(m_rawBoard[i].value != i + 1) {
+            return false;
+        }
+    }
+    return m_rawBoard[m_boardSize - 1].value == m_boardSize;
 }
 
 int GameBoard::rowCount(const QModelIndex& parent) const {
@@ -141,6 +172,10 @@ size_t GameBoard::boardSize() const {
 
 size_t GameBoard::dimension() const {
     return m_dimension;
+}
+
+int GameBoard::counter() const {
+    return m_counter;
 }
 
 std::vector<GameBoard::Tile> GameBoard::rawBoard() const {

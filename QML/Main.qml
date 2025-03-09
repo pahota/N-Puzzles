@@ -5,6 +5,8 @@ import Qt5Compat.GraphicalEffects
 import Qt.labs.settings 1.0
 import QtMultimedia 5.15
 import AudioComponents 1.0
+import GameComponents 1.0
+import QtQuick.Particles 2.15
 
 ApplicationWindow {
     id: root
@@ -23,6 +25,13 @@ ApplicationWindow {
     property bool isPaused: false
     property bool isEnglish: true
     property bool showMainMenu: true
+    property int currentDimension: 4
+    property var scoreManager: Score {
+        onCurrentScoreChanged: {
+            scoreValueText.text = currentScore
+            borderCanvas.requestPaint()
+        }
+    }
 
     Settings {
         id: settingsStore
@@ -50,7 +59,12 @@ ApplicationWindow {
         interval: 1000
         repeat: true
         running: timerRunning && !isGameWon && !isPaused
-        onTriggered: elapsedTime++
+        onTriggered: {
+            elapsedTime++
+            if (scoreManager) {
+                scoreManager.calculateScore(elapsedTime, displayCounter)
+            }
+        }
     }
 
     Background {
@@ -63,35 +77,44 @@ ApplicationWindow {
         source: "Pause.qml"
         anchors.fill: parent
     }
-
     QtObject {
         id: translations
         property var texts: ({
             "time": { "en": "Time", "ru": "Время" },
             "steps": { "en": "Steps", "ru": "Шаги" },
+            "score": { "en": "Score", "ru": "Очки" },
             "resume": { "en": "Resume", "ru": "Продолжить" },
             "pause": { "en": "Pause", "ru": "Пауза" },
             "restart": { "en": "Restart", "ru": "Рестарт" },
             "settings": { "en": "Settings", "ru": "Настройки" },
             "congratulations": { "en": "Congratulations!", "ru": "Поздравляем!" },
             "puzzleSolved": { "en": "Puzzle Solved!", "ru": "Головоломка решена!" },
-            "timeLabel": { "en": "Time: ", "ru": "Время: " },
-            "movesLabel": { "en": "Moves: ", "ru": "Ходы: " },
+            "timeLabel": { "en": "Time", "ru": "Время" },
+            "movesLabel": { "en": "Moves", "ru": "Ходы" },
+            "scoreLabel": { "en": "Score", "ru": "Очки" },
             "playAgain": { "en": "Play Again", "ru": "Играть снова" },
+            "share": { "en": "Share", "ru": "Поделиться" },
             "about": { "en": "About Game", "ru": "Об игре" },
             "close": { "en": "Close", "ru": "Закрыть" },
             "mainMenu": { "en": "Main Menu", "ru": "Главное меню" },
             "gamePaused": { "en": "Game Paused", "ru": "Игра приостановлена" },
             "continueGame": { "en": "Continue Game", "ru": "Продолжить игру" },
             "restartLevel": { "en": "Restart Level", "ru": "Начать заново" },
-            "mainMenu": { "en": "Main Menu", "ru": "Главное меню" },
-            "confirmExit": { "en": "Confirm Exit", "ru": "Подтвердите выход" },
             "exitConfirmationMessage": { "en": "Are you sure you want to exit to the main menu? Your progress in this level will be lost.", "ru": "Вы уверены, что хотите выйти в главное меню? Прогресс на данном уровне будет потерян." },
             "cancel": { "en": "Cancel", "ru": "Отмена" },
-            "exit": { "en": "Exit", "ru": "Выйти" }
+            "exit": { "en": "Exit", "ru": "Выйти" },
+            "topScores": { "en": "Top Scores", "ru": "Лучшие результаты" },
+            "newRecord": { "en": "New Record!", "ru": "Новый рекорд!" },
+            "resultsCopied": { "en": "Results copied to clipboard", "ru": "Результаты скопированы в буфер обмена" },
+            "shareText": { "en": "I solved the {puzzle} in {time} with {moves} moves! My score: {score}", "ru": "Я решил {puzzle} за {time} и {moves} ходов! Мой счёт: {score}" },
+            "moves": { "en": "Moves", "ru": "Ходы" },
+            "confirmExit": { "en": "Confirm Exit", "ru": "Подтвердите выход" },
+            "saveGame": { "en": "Save Game", "ru": "Сохранить игру" },
+            "enterSaveName": { "en": "Enter save name", "ru": "Введите имя сохранения" },
+            "save": { "en": "Save and exit", "ru": "Сохранить и выйти" }
         })
         function t(key) {
-            return texts[key][isEnglish ? "en" : "ru"]
+            return texts[key][isEnglish ? "en" : "ru"] || key
         }
     }
 
@@ -101,8 +124,9 @@ ApplicationWindow {
         isEnglish: root.isEnglish
         themeIndex: root.themeIndex
 
-        onPlayClicked: {
+        onStartGame: function(dimension) {
             showMainMenu = false
+            currentDimension = dimension
             restartGame()
         }
     }
@@ -114,16 +138,15 @@ ApplicationWindow {
 
         Rectangle {
             id: timeCounter
-            width: parent.width * 0.15
+            width: parent.width * 0.12
             height: parent.height * 0.10
             radius: height / 4
             color: theme.counterBackgroundColor
             border { color: theme.tileBorderColor; width: 2 }
             anchors {
-                top: parent.top
+                top: gameBoardBackground.top
                 left: parent.left
-                topMargin: gameBoardBackground.minMargin
-                leftMargin: (root.width - (gameBoardBackground.boardSize + width * 2.1 + gameBoardBackground.minMargin * 2)) / 2
+                leftMargin: (root.width - (gameBoardBackground.width + width * 2.05 + gameBoardBackground.minMargin * 4)) / 2
             }
             layer.enabled: true
             layer.effect: DropShadow {
@@ -150,6 +173,13 @@ ApplicationWindow {
                     mipmap: true
                     anchors.verticalCenter: parent.verticalCenter
                     fillMode: Image.PreserveAspectFit
+
+                    ColorOverlay {
+                        anchors.fill: parent
+                        source: parent
+                        color: themeIndex === 2 ? theme.timerCounterTextColor : "transparent"
+                        visible: themeIndex === 2
+                    }
                 }
 
                 Rectangle {
@@ -190,7 +220,7 @@ ApplicationWindow {
             anchors {
                 top: timeCounter.top
                 left: timeCounter.right
-                leftMargin: timeCounter.width * 0.1
+                leftMargin: timeCounter.width * 0.05
             }
             layer.enabled: true
             layer.effect: DropShadow {
@@ -217,6 +247,13 @@ ApplicationWindow {
                     mipmap: true
                     anchors.verticalCenter: parent.verticalCenter
                     fillMode: Image.PreserveAspectFit
+
+                    ColorOverlay {
+                        anchors.fill: parent
+                        source: parent
+                        color: themeIndex === 2 ? theme.moveCounterTextColor : "transparent"
+                        visible: themeIndex === 2
+                    }
                 }
 
                 Rectangle {
@@ -246,27 +283,197 @@ ApplicationWindow {
                 }
             }
         }
+
         Rectangle {
-            id: pauseButton
-            width: timeCounter.width * 2.1
-            height: timeCounter.height
-            radius: timeCounter.radius
-            color: theme.counterBackgroundColor
-            border { color: theme.tileBorderColor; width: 2 }
+            id: scorePanel
+            width: gameUI.width * 0.12
+            height: gameUI.height * 0.06
+            radius: 0
+            color: "transparent"
+            border.width: 0
+
             anchors {
-                top: moveCounter.bottom
-                topMargin: height * 0.2
-                left: timeCounter.left
+                top: gameUI.top
+                right: gameUI.right
             }
+
+            Canvas {
+                id: borderCanvas
+                anchors.fill: parent
+                antialiasing: true
+                renderTarget: Canvas.FramebufferObject
+                renderStrategy: Canvas.Cooperative
+
+                onPaint: {
+                    var ctx = getContext("2d");
+                    ctx.reset();
+
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeStyle = theme.highlightColor;
+
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(0, height - 16);
+                    ctx.arc(16, height - 16, 16, Math.PI, Math.PI/2, true);
+                    ctx.lineTo(width, height);
+                    ctx.stroke();
+                }
+            }
+
             layer.enabled: true
             layer.effect: DropShadow {
                 transparentBorder: true
-                horizontalOffset: 3
-                verticalOffset: 3
-                radius: 8
-                samples: 16
-                color: "#66000000"
+                horizontalOffset: 1
+                verticalOffset: 1
+                radius: 6
+                samples: 17
+                color: "#40000000"
             }
+
+            Rectangle {
+                id: glowBase
+                anchors.fill: parent
+                radius: 0
+                color: "transparent"
+                z: -1
+
+                layer.enabled: true
+                layer.effect: Glow {
+                    radius: 8
+                    samples: 16
+                    color: Qt.rgba(theme.highlightColor.r, theme.highlightColor.g, theme.highlightColor.b, 0.5)
+                    spread: 0.2
+                }
+            }
+
+            Rectangle {
+                id: contentRect
+                anchors.fill: parent
+                color: "transparent"
+                border.width: 0
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: parent.width * 0.04
+
+                    Image {
+                        id: scoreIcon
+                        source: themeIndex === 0 ? "qrc:/Img/Icons/scoreIcons/scoreLight.svg" :
+                                themeIndex === 1 ? "qrc:/Img/Icons/scoreIcons/scoreDark.svg" :
+                                                  "qrc:/Img/Icons/scoreIcons/scoreDark.svg"
+                        width: scorePanel.height * 0.7
+                        height: width
+                        smooth: true
+                        mipmap: true
+                        anchors.verticalCenter: parent.verticalCenter
+                        fillMode: Image.PreserveAspectFit
+
+                        ColorOverlay {
+                            anchors.fill: parent
+                            source: parent
+                            color: theme.highlightColor
+                        }
+                    }
+
+                    Rectangle {
+                        width: 1
+                        height: scoreIcon.height * 0.8
+                        color: Qt.rgba(theme.tileBorderColor.r, theme.tileBorderColor.g, theme.tileBorderColor.b, 0.4)
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: scorePanel.width * 0.03
+
+                        Text {
+                            id: scoreLabel
+                            text: translations.t("score") + ":"
+                            color: theme.counterTextColor
+                            font { family: "Source Sans Pro"; pixelSize: scorePanel.height * 0.4; letterSpacing: 0.5 }
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Text {
+                            id: scoreValueText
+                            text: scoreManager ? scoreManager.currentScore : "10000"
+                            color: "#FFFFFF"
+                            font { family: "Source Sans Pro"; pixelSize: scorePanel.height * 0.45 }
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            layer.enabled: true
+                            layer.effect: Glow {
+                                radius: 3
+                                samples: 7
+                                color: Qt.rgba(theme.highlightColor.r, theme.highlightColor.g, theme.highlightColor.b, 0.7)
+                                spread: 0.2
+                            }
+
+                            Behavior on text {
+                                SequentialAnimation {
+                                    NumberAnimation { target: scoreValueText; property: "scale"; to: 1.25; duration: 150; easing.type: Easing.OutBack }
+                                    NumberAnimation { target: scoreValueText; property: "scale"; to: 1.0; duration: 200; easing.type: Easing.OutElastic; easing.amplitude: 1.2; easing.period: 0.5 }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Component.onCompleted: {
+                borderCanvas.requestPaint()
+                if (scoreManager) {
+                    scoreManager.resetScore();
+                }
+            }
+        }
+
+        Connections {
+            target: gameBoard
+            function onCounterChanged() {
+                displayCounter = gameBoard.counter
+                if (!timerRunning && displayCounter > 0) timerRunning = true
+                if (scoreManager && displayCounter > 0) {
+                    scoreManager.calculateScore(elapsedTime, displayCounter);
+                }
+            }
+            function onGameWon() {
+                isGameWon = true
+                timerRunning = false
+                showWinDialog()
+            }
+            function onMoveMade() {
+                if (scoreManager) {
+                    scoreManager.calculateScore(elapsedTime, displayCounter);
+                }
+            }
+        }
+        Rectangle {
+            id: pauseButton
+            width: timeCounter.width * 2.05
+            height: timeCounter.height
+            radius: timeCounter.radius
+            color: theme.pauseButtonBackgroundColor
+            border {
+                color: pauseArea.containsMouse ? theme.accentColor : theme.pauseButtonBorderColor
+                width: 2
+            }
+            anchors {
+                top: timeCounter.bottom
+                topMargin: gameBoardBackground.height - 7.2 * height
+                left: timeCounter.left
+            }
+
+            layer.enabled: true
+            layer.effect: DropShadow {
+                transparentBorder: true
+                horizontalOffset: 2
+                verticalOffset: 2
+                radius: 8
+                samples: 12
+                color: theme.shadowColor
+            }
+
             MouseArea {
                 id: pauseArea
                 anchors.fill: parent
@@ -276,8 +483,30 @@ ApplicationWindow {
                     timerRunning = !isPaused && !isGameWon && displayCounter > 0
                 }
             }
+
+            Rectangle {
+                id: pauseGlow
+                anchors.fill: parent
+                radius: parent.radius
+                color: "transparent"
+                opacity: pauseArea.containsMouse ? 1 : 0
+
+                layer.enabled: pauseArea.containsMouse
+                layer.effect: Glow {
+                    radius: 6
+                    samples: 12
+                    color: Qt.rgba(theme.accentColor.r, theme.accentColor.g, theme.accentColor.b, 0.4)
+                    spread: 0.2
+                }
+
+                Behavior on opacity {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                }
+            }
+
             Item {
                 anchors.fill: parent
+
                 Image {
                     id: pauseIcon
                     source: themeIndex === 0 ?
@@ -295,26 +524,60 @@ ApplicationWindow {
                     smooth: true
                     mipmap: true
                     fillMode: Image.PreserveAspectFit
+
+                    ColorOverlay {
+                        anchors.fill: parent
+                        source: parent
+                        color: pauseArea.containsMouse ? theme.pauseButtonBorderColor : themeIndex === 0 ? "#242424" : "#FFFFFF"
+                        opacity: 1
+
+                        Behavior on color {
+                            ColorAnimation { duration: 200; easing.type: Easing.OutCubic }
+                        }
+                    }
                 }
+
                 Text {
                     id: pauseText
                     text: root.isPaused ? translations.t("resume") : translations.t("pause")
-                    color: theme.counterTextColor
-                    font { family: "Source Sans Pro"; pixelSize: pauseButton.height * 0.35 }
+                    color: pauseArea.containsMouse ? theme.pauseButtonBorderColor : themeIndex === 0 ? "#242424" : "#FFFFFF"
+                    font {
+                        family: "Source Sans Pro"
+                        pixelSize: pauseArea.containsMouse ? pauseButton.height * 0.38 : pauseButton.height * 0.35
+                        letterSpacing: 0.5
+                    }
                     anchors.centerIn: parent
+
+                    Behavior on font.pixelSize {
+                        NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                    }
+
+                    Behavior on color {
+                        ColorAnimation { duration: 200; easing.type: Easing.OutCubic }
+                    }
                 }
             }
-            states: State {
-                name: "hovered"
-                when: pauseArea.containsMouse
-                PropertyChanges { target: pauseButton; scale: 0.98 }
-                PropertyChanges { target: pauseText; color: theme.highlightColor }
+
+            Behavior on color {
+                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
             }
-            transitions: Transition {
-                from: ""; to: "hovered"; reversible: true
-                ParallelAnimation {
-                    NumberAnimation { properties: "scale"; duration: 200 }
-                    ColorAnimation { properties: "color"; duration: 200 }
+
+            Behavior on border.color {
+                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+            }
+
+            transform: Scale {
+                id: pauseScale
+                origin.x: pauseButton.width/2
+                origin.y: pauseButton.height/2
+                xScale: pauseArea.containsMouse ? 0.98 : 1.0
+                yScale: pauseArea.containsMouse ? 0.98 : 1.0
+
+                Behavior on xScale {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                }
+                Behavior on yScale {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
                 }
             }
 
@@ -325,26 +588,31 @@ ApplicationWindow {
                 }
             }
         }
+
         Rectangle {
             id: restartButton
-            width: timeCounter.width * 2.1
+            width: timeCounter.width * 2.05
             height: timeCounter.height
             radius: timeCounter.radius
-            color: theme.counterBackgroundColor
-            border { color: theme.tileBorderColor; width: 2 }
+            color: theme.restartButtonBackgroundColor
+            border {
+                color: restartArea.containsMouse ? theme.accentColor : theme.restartButtonBorderColor
+                width: 2
+            }
             anchors {
                 top: pauseButton.bottom
-                topMargin: height * 0.2
+                topMargin: height * 0.3
                 left: timeCounter.left
             }
+
             layer.enabled: true
             layer.effect: DropShadow {
                 transparentBorder: true
-                horizontalOffset: 3
-                verticalOffset: 3
+                horizontalOffset: 2
+                verticalOffset: 2
                 radius: 8
-                samples: 16
-                color: "#66000000"
+                samples: 12
+                color: theme.shadowColor
             }
 
             MouseArea {
@@ -356,6 +624,26 @@ ApplicationWindow {
                 }
             }
 
+            Rectangle {
+                id: restartGlow
+                anchors.fill: parent
+                radius: parent.radius
+                color: "transparent"
+                opacity: restartArea.containsMouse ? 1 : 0
+
+                layer.enabled: restartArea.containsMouse
+                layer.effect: Glow {
+                    radius: 6
+                    samples: 12
+                    color: Qt.rgba(theme.accentColor.r, theme.accentColor.g, theme.accentColor.b, 0.4)
+                    spread: 0.2
+                }
+
+                Behavior on opacity {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                }
+            }
+
             Item {
                 anchors.fill: parent
 
@@ -363,7 +651,7 @@ ApplicationWindow {
                     id: restartIcon
                     source: themeIndex === 0 ? "qrc:/Img/Icons/restartIcons/restartLight.svg" :
                             themeIndex === 1 ? "qrc:/Img/Icons/restartIcons/restartDark.svg" :
-                                             "qrc:/Img/Icons/restartIcons/restartDark.svg"
+                                            "qrc:/Img/Icons/restartIcons/restartDark.svg"
                     width: restartButton.height * 0.6
                     height: width
                     anchors {
@@ -374,60 +662,99 @@ ApplicationWindow {
                     smooth: true
                     mipmap: true
                     fillMode: Image.PreserveAspectFit
+
+                    ColorOverlay {
+                        anchors.fill: parent
+                        source: parent
+                        color: restartArea.containsMouse ? theme.restartButtonBorderColor : themeIndex === 0 ? "#242424" : "#FFFFFF"
+                        opacity: 1
+
+                        Behavior on color {
+                            ColorAnimation { duration: 200; easing.type: Easing.OutCubic }
+                        }
+                    }
+
+                    Behavior on rotation {
+                        NumberAnimation { duration: 250; easing.type: Easing.OutBack }
+                    }
+
+                    rotation: restartArea.containsMouse ? -90 : 0
                 }
 
                 Text {
                     id: restartText
                     text: translations.t("restart")
-                    color: theme.counterTextColor
-                    font { family: "Source Sans Pro"; pixelSize: restartButton.height * 0.35 }
+                    color: restartArea.containsMouse ? theme.restartButtonBorderColor : themeIndex === 0 ? "#242424" : "#FFFFFF"
+                    font {
+                        family: "Source Sans Pro"
+                        pixelSize: restartArea.containsMouse ? restartButton.height * 0.38 : restartButton.height * 0.35
+                        letterSpacing: 0.5
+                    }
                     anchors.centerIn: parent
+
+                    Behavior on font.pixelSize {
+                        NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                    }
+
+                    Behavior on color {
+                        ColorAnimation { duration: 200; easing.type: Easing.OutCubic }
+                    }
                 }
             }
 
-            states: State {
-                name: "hovered"
-                when: restartArea.containsMouse
-                PropertyChanges { target: restartButton; scale: 0.98 }
-                PropertyChanges { target: restartText; color: theme.highlightColor }
-                PropertyChanges { target: restartIcon; rotation: -90 }
+            Behavior on color {
+                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
             }
 
-            transitions: Transition {
-                from: ""; to: "hovered"; reversible: true
-                ParallelAnimation {
-                    NumberAnimation { properties: "scale"; duration: 200 }
-                    ColorAnimation { properties: "color"; duration: 200 }
-                    NumberAnimation { properties: "rotation"; duration: 200 }
+            Behavior on border.color {
+                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+            }
+
+            transform: Scale {
+                id: restartScale
+                origin.x: restartButton.width/2
+                origin.y: restartButton.height/2
+                xScale: restartArea.containsMouse ? 0.98 : 1.0
+                yScale: restartArea.containsMouse ? 0.98 : 1.0
+
+                Behavior on xScale {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                }
+                Behavior on yScale {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
                 }
             }
         }
 
         Rectangle {
             id: settingsButton
-            width: timeCounter.width * 2.1
+            width: timeCounter.width * 2.05
             height: timeCounter.height
             radius: timeCounter.radius
-            color: theme.counterBackgroundColor
-            border { color: theme.tileBorderColor; width: 2 }
+            color: theme.settingsButtonBackgroundColor
+            border {
+                color: settingsArea.containsMouse ? theme.accentColor : theme.settingsButtonBorderColor
+                width: 2
+            }
             anchors {
                 top: restartButton.bottom
-                topMargin: height * 0.2
+                topMargin: height * 0.3
                 left: timeCounter.left
             }
+
             layer.enabled: true
             layer.effect: DropShadow {
                 transparentBorder: true
-                horizontalOffset: 3
-                verticalOffset: 3
+                horizontalOffset: 2
+                verticalOffset: 2
                 radius: 8
-                samples: 16
-                color: "#66000000"
+                samples: 12
+                color: theme.shadowColor
             }
 
-            property bool backgroundMusicEnabled: true
-            property int volume: 75
-            property string selectedMusic: "Relaxing"
+            property bool backgroundMusicEnabled: settingsStore.value("backgroundMusic", true)
+            property int volume: settingsStore.value("volume", 75)
+            property string selectedMusic: settingsStore.value("selectedMusic", "Relaxing")
             property var audioController
 
             Component.onCompleted: {
@@ -437,14 +764,16 @@ ApplicationWindow {
             function initializeAudio() {
                 if (backgroundMusicEnabled && audioController) {
                     var musicPath = ""
-                    if (selectedMusic === "Relaxing") {
+                    if (selectedMusic === "Classic") {
                         musicPath = "qrc:/Sounds/soundIntellect.mp3"
                     } else if (selectedMusic === "Energetic") {
-                        musicPath = "qrc:/Sounds/soundIntellect.mp3"
-                    } else if (selectedMusic === "Classic") {
-                        musicPath = "qrc:/Sounds/soundIntellect.mp3"
+                        musicPath = "qrc:/Sounds/N_Puzzle!Music.mp3"
+                    } else if (selectedMusic === "Relaxing") {
+                        musicPath = "qrc:/Sounds/focus.mp3"
                     }
 
+                    audioController.stop()
+                    audioController.setLooping(true)
                     audioController.playSound(musicPath)
                     audioController.setVolume(volume / 100.0)
                 }
@@ -459,53 +788,95 @@ ApplicationWindow {
                     if (component.status === Component.Ready) {
                         var settingsWindow = component.createObject(root, {
                             "themeIndex": root.themeIndex,
-                            "isEnglish": root.isEnglish
+                            "isEnglish": root.isEnglish,
+                            "backgroundMusicEnabled": settingsButton.backgroundMusicEnabled,
+                            "volume": settingsButton.volume,
+                            "selectedMusic": settingsButton.selectedMusic,
+                            "audioController": settingsButton.audioController
                         })
-                        settingsWindow.onThemeChanged.connect(function(newTheme) {
+
+                        settingsWindow.themeChanged.connect(function(newTheme) {
                             root.themeIndex = newTheme
                             settingsStore.setValue("theme", newTheme)
                         })
-                        settingsWindow.onLanguageChanged.connect(function(newIsEnglish) {
+
+                        settingsWindow.languageChanged.connect(function(newIsEnglish) {
                             root.isEnglish = newIsEnglish
                             settingsStore.setValue("language", newIsEnglish)
                         })
 
-                        if (settingsWindow.hasOwnProperty("backgroundMusicEnabled")) {
-                            settingsWindow.backgroundMusicEnabled = backgroundMusicEnabled
-                            settingsWindow.volume = volume
-                            settingsWindow.selectedMusic = selectedMusic
-                            settingsWindow.audioController = audioController
+                        settingsWindow.settingsValueChanged.connect(function() {
+                            settingsButton.backgroundMusicEnabled = settingsWindow.backgroundMusicEnabled
+                            settingsButton.volume = settingsWindow.volume
+                            settingsButton.selectedMusic = settingsWindow.selectedMusic
 
-                            if (settingsWindow.hasOwnProperty("applySettings")) {
-                                settingsWindow.applySettings.connect(function() {
-                                    backgroundMusicEnabled = settingsWindow.backgroundMusicEnabled
-                                    volume = settingsWindow.volume
-                                    selectedMusic = settingsWindow.selectedMusic
-                                    settingsStore.setValue("backgroundMusic", backgroundMusicEnabled)
-                                    settingsStore.setValue("volume", volume)
-                                    settingsStore.setValue("selectedMusic", selectedMusic)
+                            if (settingsButton.backgroundMusicEnabled && settingsButton.audioController) {
+                                settingsButton.audioController.setVolume(settingsButton.volume / 100.0)
 
-                                    if (backgroundMusicEnabled && audioController) {
-                                        var musicPath = ""
-                                        if (selectedMusic === "Relaxing") {
-                                            musicPath = "qrc:/Sounds/soundIntellect.mp3"
-                                        } else if (selectedMusic === "Energetic") {
-                                            musicPath = "qrc:/Sounds/soundIntellect.mp3"
-                                        } else if (selectedMusic === "Classic") {
-                                            musicPath = "qrc:/Sounds/soundIntellect.mp3"
-                                        }
-
-                                        audioController.playSound(musicPath)
-                                        audioController.setVolume(volume / 100.0)
-                                    } else if (audioController) {
-                                        audioController.stop()
-                                    }
-                                })
+                                var musicPath = ""
+                                if (settingsButton.selectedMusic === "Classic") {
+                                    musicPath = "qrc:/Sounds/soundIntellect.mp3"
+                                } else if (settingsButton.selectedMusic === "Energetic") {
+                                    musicPath = "qrc:/Sounds/N_Puzzle!Music.mp3"
+                                } else if (settingsButton.selectedMusic === "Relaxing") {
+                                    musicPath = "qrc:/Sounds/focus.mp3"
+                                }
+                                settingsButton.audioController.stop()
+                                settingsButton.audioController.setLooping(true)
+                                settingsButton.audioController.playSound(musicPath)
+                            } else if (settingsButton.audioController) {
+                                settingsButton.audioController.stop()
                             }
-                        }
+                        })
+
+                        settingsWindow.applySettings.connect(function() {
+                            settingsButton.backgroundMusicEnabled = settingsWindow.backgroundMusicEnabled
+                            settingsButton.volume = settingsWindow.volume
+                            settingsButton.selectedMusic = settingsWindow.selectedMusic
+                            settingsStore.setValue("backgroundMusic", settingsButton.backgroundMusicEnabled)
+                            settingsStore.setValue("volume", settingsButton.volume)
+                            settingsStore.setValue("selectedMusic", settingsButton.selectedMusic)
+
+                            if (settingsButton.backgroundMusicEnabled && settingsButton.audioController) {
+                                var musicPath = ""
+                                if (settingsButton.selectedMusic === "Classic") {
+                                    musicPath = "qrc:/Sounds/soundIntellect.mp3"
+                                } else if (settingsButton.selectedMusic === "Energetic") {
+                                    musicPath = "qrc:/Sounds/N_Puzzle!Music.mp3"
+                                } else if (settingsButton.selectedMusic === "Relaxing") {
+                                    musicPath = "qrc:/Sounds/focus.mp3"
+                                }
+                                settingsButton.audioController.stop()
+                                settingsButton.audioController.setLooping(true)
+                                settingsButton.audioController.playSound(musicPath)
+                                settingsButton.audioController.setVolume(settingsButton.volume / 100.0)
+                            } else if (settingsButton.audioController) {
+                                settingsButton.audioController.stop()
+                            }
+                        })
 
                         settingsWindow.visible = true
                     }
+                }
+            }
+
+            Rectangle {
+                id: settingsGlow
+                anchors.fill: parent
+                radius: parent.radius
+                color: "transparent"
+                opacity: settingsArea.containsMouse ? 1 : 0
+
+                layer.enabled: settingsArea.containsMouse
+                layer.effect: Glow {
+                    radius: 6
+                    samples: 12
+                    color: Qt.rgba(theme.accentColor.r, theme.accentColor.g, theme.accentColor.b, 0.4)
+                    spread: 0.2
+                }
+
+                Behavior on opacity {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
                 }
             }
 
@@ -516,7 +887,7 @@ ApplicationWindow {
                     id: settingsIcon
                     source: themeIndex === 0 ? "qrc:/Img/Icons/settingsIcon/settingsLight.svg" :
                             themeIndex === 1 ? "qrc:/Img/Icons/settingsIcon/settingsDark.svg" :
-                                             "qrc:/Img/Icons/settingsIcon/settingsDark.svg"
+                                            "qrc:/Img/Icons/settingsIcon/settingsDark.svg"
                     width: settingsButton.height * 0.6
                     height: width
                     anchors {
@@ -527,55 +898,93 @@ ApplicationWindow {
                     smooth: true
                     mipmap: true
                     fillMode: Image.PreserveAspectFit
+
+                    ColorOverlay {
+                        anchors.fill: parent
+                        source: parent
+                        color: settingsArea.containsMouse ? theme.settingsButtonBorderColor : themeIndex === 0 ? "#242424" : "#FFFFFF"
+                        opacity: 1
+
+                        Behavior on color {
+                            ColorAnimation { duration: 200; easing.type: Easing.OutCubic }
+                        }
+                    }
+
+                    Behavior on rotation {
+                        NumberAnimation { duration: 250; easing.type: Easing.OutBack }
+                    }
+
+                    rotation: settingsArea.containsMouse ? -90 : 0
                 }
 
                 Text {
                     id: settingsText
                     text: translations.t("settings")
-                    color: theme.counterTextColor
-                    font { family: "Source Sans Pro"; pixelSize: settingsButton.height * 0.35 }
+                    color: settingsArea.containsMouse ? theme.settingsButtonBorderColor : themeIndex === 0 ? "#242424" : "#FFFFFF"
+                    font {
+                        family: "Source Sans Pro"
+                        pixelSize: settingsArea.containsMouse ? settingsButton.height * 0.38 : settingsButton.height * 0.35
+                        letterSpacing: 0.5
+                    }
                     anchors.centerIn: parent
+
+                    Behavior on font.pixelSize {
+                        NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                    }
+
+                    Behavior on color {
+                        ColorAnimation { duration: 200; easing.type: Easing.OutCubic }
+                    }
                 }
             }
 
-            states: State {
-                name: "hovered"
-                when: settingsArea.containsMouse
-                PropertyChanges { target: settingsButton; scale: 0.98 }
-                PropertyChanges { target: settingsText; color: theme.highlightColor }
-                PropertyChanges { target: settingsIcon; rotation: -90 }
+            Behavior on color {
+                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
             }
 
-            transitions: Transition {
-                from: ""; to: "hovered"; reversible: true
-                ParallelAnimation {
-                    NumberAnimation { properties: "scale"; duration: 200 }
-                    ColorAnimation { properties: "color"; duration: 200 }
-                    NumberAnimation { properties: "rotation"; duration: 200 }
+            Behavior on border.color {
+                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+            }
+
+            transform: Scale {
+                id: settingsScale
+                origin.x: settingsButton.width/2
+                origin.y: settingsButton.height/2
+                xScale: settingsArea.containsMouse ? 0.98 : 1.0
+                yScale: settingsArea.containsMouse ? 0.98 : 1.0
+
+                Behavior on xScale {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                }
+                Behavior on yScale {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
                 }
             }
         }
 
         Rectangle {
             id: aboutButton
-            width: timeCounter.width * 2.1
+            width: timeCounter.width * 2.05
             height: timeCounter.height
             radius: timeCounter.radius
-            color: theme.counterBackgroundColor
-            border { color: theme.tileBorderColor; width: 2 }
+            color: theme.buttonBackgroundColor
+            border {
+                color: aboutArea.containsMouse ? theme.accentColor : theme.aboutGameButtonBorderColor
+                width: 2
+            }
             anchors {
                 top: settingsButton.bottom
-                topMargin: height * 0.2
+                topMargin: height * 0.3
                 left: timeCounter.left
             }
             layer.enabled: true
             layer.effect: DropShadow {
                 transparentBorder: true
-                horizontalOffset: 3
-                verticalOffset: 3
+                horizontalOffset: 2
+                verticalOffset: 2
                 radius: 8
-                samples: 16
-                color: "#66000000"
+                samples: 12
+                color: theme.shadowColor
             }
 
             MouseArea {
@@ -594,6 +1003,26 @@ ApplicationWindow {
                 }
             }
 
+            Rectangle {
+                id: aboutGlow
+                anchors.fill: parent
+                radius: parent.radius
+                color: "transparent"
+                opacity: aboutArea.containsMouse ? 1 : 0
+
+                layer.enabled: aboutArea.containsMouse
+                layer.effect: Glow {
+                    radius: 6
+                    samples: 12
+                    color: Qt.rgba(theme.accentColor.r, theme.accentColor.g, theme.accentColor.b, 0.4)
+                    spread: 0.2
+                }
+
+                Behavior on opacity {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                }
+            }
+
             Item {
                 anchors.fill: parent
 
@@ -601,8 +1030,8 @@ ApplicationWindow {
                     id: aboutIcon
                     source: themeIndex === 0 ? "qrc:/Img/Icons/aboutGameIcons/aboutgameLight.svg" :
                             themeIndex === 1 ? "qrc:/Img/Icons/aboutGameIcons/aboutGameDark.svg" :
-                                             "qrc:/Img/Icons/aboutGameIcons/aboutGameDark.svg"
-                    width: aboutButton.height * 0.5
+                                            "qrc:/Img/Icons/aboutGameIcons/aboutGameDark.svg"
+                    width: aboutButton.height * 0.6
                     height: width
                     anchors {
                         left: parent.left
@@ -612,53 +1041,87 @@ ApplicationWindow {
                     smooth: true
                     mipmap: true
                     fillMode: Image.PreserveAspectFit
+
+                    ColorOverlay {
+                        anchors.fill: parent
+                        source: parent
+                        color: aboutArea.containsMouse ? theme.aboutGameButtonBorderColor : themeIndex === 0 ? "#242424" : "#FFFFFF"
+                        opacity: 1
+
+                        Behavior on color {
+                            ColorAnimation { duration: 200; easing.type: Easing.OutCubic }
+                        }
+                    }
                 }
 
                 Text {
                     id: aboutText
                     text: translations.t("about")
-                    color: theme.counterTextColor
-                    font { family: "Source Sans Pro"; pixelSize: aboutButton.height * 0.35 }
+                    color: aboutArea.containsMouse ? theme.aboutGameButtonBorderColor : themeIndex === 0 ? "#242424" : "#FFFFFF"
+                    font {
+                        family: "Source Sans Pro"
+                        pixelSize: aboutArea.containsMouse ? aboutButton.height * 0.34 : aboutButton.height * 0.3
+                        letterSpacing: 0.5
+                    }
                     anchors.centerIn: parent
+
+                    Behavior on font.pixelSize {
+                        NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                    }
+
+                    Behavior on color {
+                        ColorAnimation { duration: 200; easing.type: Easing.OutCubic }
+                    }
                 }
             }
 
-            states: State {
-                name: "hovered"
-                when: aboutArea.containsMouse
-                PropertyChanges { target: aboutButton; scale: 0.98 }
-                PropertyChanges { target: aboutText; color: theme.highlightColor }
+            Behavior on color {
+                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
             }
 
-            transitions: Transition {
-                from: ""; to: "hovered"; reversible: true
-                ParallelAnimation {
-                    NumberAnimation { properties: "scale"; duration: 200 }
-                    ColorAnimation { properties: "color"; duration: 200 }
+            Behavior on border.color {
+                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+            }
+
+            transform: Scale {
+                id: aboutScale
+                origin.x: aboutButton.width/2
+                origin.y: aboutButton.height/2
+                xScale: aboutArea.containsMouse ? 0.98 : 1.0
+                yScale: aboutArea.containsMouse ? 0.98 : 1.0
+
+                Behavior on xScale {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                }
+                Behavior on yScale {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
                 }
             }
         }
 
         Rectangle {
             id: mainMenuButton
-            width: timeCounter.width * 2.1
+            width: timeCounter.width * 2.05
             height: timeCounter.height
             radius: timeCounter.radius
-            color: theme.counterBackgroundColor
-            border { color: theme.tileBorderColor; width: 2 }
+            color: theme.menuButtonBackgroundColor
+            border {
+                color: mainMenuArea.containsMouse ? theme.accentColor : theme.menuButtonBorderColor
+                width: 2
+            }
             anchors {
                 top: aboutButton.bottom
-                topMargin: height * 0.2
+                topMargin: height * 0.3
                 left: timeCounter.left
             }
             layer.enabled: true
             layer.effect: DropShadow {
                 transparentBorder: true
-                horizontalOffset: 3
-                verticalOffset: 3
+                horizontalOffset: 2
+                verticalOffset: 2
                 radius: 8
-                samples: 16
-                color: "#66000000"
+                samples: 12
+                color: theme.shadowColor
             }
 
             MouseArea {
@@ -672,6 +1135,26 @@ ApplicationWindow {
                 }
             }
 
+            Rectangle {
+                id: mainMenuGlow
+                anchors.fill: parent
+                radius: parent.radius
+                color: "transparent"
+                opacity: mainMenuArea.containsMouse ? 1 : 0
+
+                layer.enabled: mainMenuArea.containsMouse
+                layer.effect: Glow {
+                    radius: 6
+                    samples: 12
+                    color: Qt.rgba(theme.accentColor.r, theme.accentColor.g, theme.accentColor.b, 0.4)
+                    spread: 0.2
+                }
+
+                Behavior on opacity {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                }
+            }
+
             Item {
                 anchors.fill: parent
 
@@ -679,8 +1162,8 @@ ApplicationWindow {
                     id: menuIcon
                     source: themeIndex === 0 ? "qrc:/Img/Icons/menuIcons/menuLight.svg" :
                             themeIndex === 1 ? "qrc:/Img/Icons/menuIcons/menuDark.svg" :
-                                             "qrc:/Img/Icons/menuIcons/menuDark.svg"
-                    width: mainMenuButton.height * 0.7
+                                            "qrc:/Img/Icons/menuIcons/menuDark.svg"
+                    width: mainMenuButton.height * 0.6
                     height: width
                     anchors {
                         left: parent.left
@@ -690,134 +1173,164 @@ ApplicationWindow {
                     smooth: true
                     mipmap: true
                     fillMode: Image.PreserveAspectFit
+
+                    ColorOverlay {
+                        anchors.fill: parent
+                        source: parent
+                        color: mainMenuArea.containsMouse ? theme.menuButtonBorderColor : themeIndex === 0 ? "#242424" : "#FFFFFF"
+                        opacity: 1
+
+                        Behavior on color {
+                            ColorAnimation { duration: 200; easing.type: Easing.OutCubic }
+                        }
+                    }
                 }
 
                 Text {
                     id: menuText
                     text: translations.t("mainMenu")
-                    color: theme.counterTextColor
-                    font { family: "Source Sans Pro"; pixelSize: mainMenuButton.height * 0.35 }
+                    color: mainMenuArea.containsMouse ? theme.menuButtonBorderColor : themeIndex === 0 ? "#242424" : "#FFFFFF"
+                    font {
+                        family: "Source Sans Pro"
+                        pixelSize: mainMenuArea.containsMouse ? mainMenuButton.height * 0.38 : mainMenuButton.height * 0.35
+                        letterSpacing: 0.5
+                    }
                     anchors.centerIn: parent
+
+                    Behavior on font.pixelSize {
+                        NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                    }
+
+                    Behavior on color {
+                        ColorAnimation { duration: 200; easing.type: Easing.OutCubic }
+                    }
                 }
             }
 
-            states: State {
-                name: "hovered"
-                when: mainMenuArea.containsMouse
-                PropertyChanges { target: mainMenuButton; scale: 0.98 }
-                PropertyChanges { target: menuText; color: theme.highlightColor }
+            Behavior on color {
+                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
             }
 
-            transitions: Transition {
-                from: ""; to: "hovered"; reversible: true
-                ParallelAnimation {
-                    NumberAnimation { properties: "scale"; duration: 200 }
-                    ColorAnimation { properties: "color"; duration: 200 }
+            Behavior on border.color {
+                ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+            }
+
+            transform: Scale {
+                id: mainMenuScale
+                origin.x: mainMenuButton.width/2
+                origin.y: mainMenuButton.height/2
+                xScale: mainMenuArea.containsMouse ? 0.98 : 1.0
+                yScale: mainMenuArea.containsMouse ? 0.98 : 1.0
+
+                Behavior on xScale {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                }
+                Behavior on yScale {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
                 }
             }
         }
-
         Rectangle {
             id: gameBoardBackground
-            property real minMargin: Math.min(root.width, root.height) * 0.10
+            property real minMargin: Math.min(root.width, root.height) * 0.05
             property real boardSize: Math.min(root.width * 0.65, root.height - (2 * minMargin))
-
             width: boardSize
             height: width
-            radius: 25
-            color: theme.gameBoardBackgroundColor
-            border.color: theme.tileBorderColor
-
+            radius: width * 0.22 / (root.currentDimension+1)
             anchors {
                 top: parent.top
                 bottom: parent.bottom
                 right: parent.right
-                topMargin: minMargin
+                topMargin: minMargin * 2
                 bottomMargin: minMargin
-                rightMargin: minMargin * 2
+                rightMargin: minMargin * 4
+            }
+
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: Qt.lighter(theme.gameBoardBackgroundColor, 1.1) }
+                GradientStop { position: 1.0; color: Qt.darker(theme.gameBoardBackgroundColor, 1.2) }
+            }
+
+            border {
+                width: 2
+                color: Qt.darker(theme.tileBorderColor, 1.1)
             }
 
             onWidthChanged: height = width
             onHeightChanged: width = height
 
+            Rectangle {
+                id: innerBevel
+                anchors.fill: parent
+                anchors.margins: 3
+                radius: parent.radius - 3
+                color: "transparent"
+                border {
+                    width: 1
+                    color: Qt.lighter(theme.tileBorderColor, 1.3)
+                }
+            }
+
+            Rectangle {
+                id: boardInset
+                anchors.fill: parent
+                anchors.margins: 12
+                radius: parent.radius - 6
+                color: Qt.darker(theme.gameBoardBackgroundColor, 1.05)
+
+                layer.enabled: true
+                layer.effect: InnerShadow {
+                    horizontalOffset: 2
+                    verticalOffset: 2
+                    radius: 6
+                    samples: 16
+                    color: Qt.rgba(0, 0, 0, 0.25)
+                }
+            }
+
             layer.enabled: true
             layer.effect: DropShadow {
                 transparentBorder: true
-                horizontalOffset: 5
-                verticalOffset: 5
-                radius: 16
-                samples: 32
-                color: "#40000000"
+                horizontalOffset: 6
+                verticalOffset: 6
+                radius: 12
+                samples: 16
+                color: Qt.rgba(0, 0, 0, 0.35)
             }
 
             GameBoard {
                 id: gameBoard
-                width: parent.width * 0.975
-                height: width
-                anchors.centerIn: parent
+                visible: !showMainMenu
+                anchors.centerIn: boardInset
+                width: boardSize
+                height: boardSize
                 themeIndex: root.themeIndex
-
-                onCounterChanged: {
-                    displayCounter = gameBoard.counter
-                    if (!timerRunning && displayCounter > 0) timerRunning = true
-                }
-
+                currentDimension: root.currentDimension
                 onGameWon: {
                     isGameWon = true
+                    timerRunning = false
                     showWinDialog()
+                }
+                onCountChanged: function(count) {
+                    displayCounter = count
+                }
+                onMoveMade: {
+                    if (!timerRunning) {
+                        timerRunning = true
+                    }
                 }
             }
         }
-        Dialog {
+
+        WinDialog {
             id: winDialog
-            title: translations.t("congratulations")
-            modal: true
-            anchors.centerIn: parent
-            closePolicy: Popup.CloseOnEscape
-
-            background: Rectangle {
-                color: theme.counterBackgroundColor
-                radius: 10
-                border { color: theme.tileBorderColor; width: 2 }
-            }
-
-            contentItem: Column {
-                spacing: 15
-                padding: 20
-
-                Text {
-                    text: translations.t("puzzleSolved")
-                    color: theme.counterTextColor
-                    font { family: "Source Sans Pro"; pixelSize: 24; bold: true }
-                }
-
-                Text {
-                    text: translations.t("timeLabel") + formatTime(elapsedTime)
-                    color: theme.counterTextColor
-                    font { family: "Source Sans Pro"; pixelSize: 18 }
-                }
-
-                Text {
-                    text: translations.t("movesLabel") + displayCounter
-                    color: theme.counterTextColor
-                    font { family: "Source Sans Pro"; pixelSize: 18 }
-                }
-            }
-
-            footer: DialogButtonBox {
-                Button {
-                    text: translations.t("playAgain")
-                    DialogButtonBox.buttonRole: DialogButtonBox.ResetRole
-                    onClicked: {
-                        restartGame()
-                        winDialog.close()
-                    }
-                }
-                Button {
-                    text: translations.t("close")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: winDialog.close()
-                }
+            visible: false
+            elapsedTime: root.elapsedTime * 1000
+            displayCounter: root.displayCounter
+            gameTitle: "15 Puzzle " + currentDimension + "x" + currentDimension
+            finalScore: root.scoreManager.currentScore
+            onRestartGameRequested: {
+                restartGame()
             }
         }
 
@@ -866,12 +1379,15 @@ ApplicationWindow {
         timerRunning = false
         isGameWon = false
         isPaused = false
+        scoreManager.resetScore()
         if (gameBoard) {
-            gameBoard.counter = 0
+            gameBoard.initializeBoard()
+            gameBoard.resetCounter()
             gameBoard.lastMovedIndex = -1
-            gameBoard.model.shuffle()
+            gameBoard.model.resetBoard()
         }
     }
+
     function formatTime(seconds) {
         var minutes = Math.floor(seconds / 60)
         var secs = seconds % 60
@@ -879,6 +1395,13 @@ ApplicationWindow {
     }
 
     function showWinDialog() {
+        if (scoreManager) {
+            var finalScore = scoreManager.calculateScore(elapsedTime, displayCounter)
+            scoreManager.setCurrentScore(finalScore)
+            winDialog.finalScore = finalScore
+        }
+        winDialog.x = (root.width - winDialog.width) / 2
+        winDialog.y = (root.height - winDialog.height) / 2
         winDialog.open()
     }
 }

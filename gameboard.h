@@ -8,13 +8,11 @@
 class GameBoard : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(size_t dimension MEMBER m_dimension CONSTANT)
-    Q_PROPERTY(int hiddenElementValue READ boardSize CONSTANT FINAL)
-
+    Q_PROPERTY(size_t dimension READ dimension WRITE setDimension NOTIFY dimensionChanged)
+    Q_PROPERTY(int hiddenElementValue READ boardSize NOTIFY boardSizeChanged)
+    Q_PROPERTY(int counter READ counter NOTIFY counterChanged)
 public:
-    static constexpr size_t defaultPuzzleDimension {4};
-    GameBoard(const size_t boardDimension = defaultPuzzleDimension,
-              QObject* parent = nullptr);
+    GameBoard(QObject* parent = nullptr);
 
     struct Tile
     {
@@ -32,16 +30,26 @@ public:
     };
 
     Q_INVOKABLE bool move(int index);
+    Q_INVOKABLE bool checkWin() const;
+    Q_INVOKABLE void setDimension(size_t dimension);
+    Q_INVOKABLE void resetBoard();
 
     int rowCount(const QModelIndex& parent = QModelIndex{}) const override;
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     size_t boardSize() const;
     size_t dimension() const;
+    int counter() const;
 
     std::vector<Tile> rawBoard() const;
 
     using Position = std::pair<size_t, size_t>;
     Position getRowCol(size_t index) const;
+
+signals:
+    void dimensionChanged();
+    void boardSizeChanged();
+    void counterChanged();
+    void gameWon();
 
 private:
     void shuffle();
@@ -50,8 +58,9 @@ private:
     void updateTilePositions();
 
     std::vector<Tile> m_rawBoard;
-    const size_t m_dimension;
-    const size_t m_boardSize;
+    size_t m_dimension{4};
+    size_t m_boardSize{m_dimension * m_dimension};
+    int m_counter{0};
 };
 
-#endif // GAMEBOARD_H
+#endif

@@ -5,10 +5,11 @@ import Qt.labs.settings 1.0
 
 Rectangle {
     id: profileWindow
-    width: 400
-    height: 500
-    color: Qt.rgba(theme.windowColor.r, theme.windowColor.g, theme.windowColor.b, 0.9)
-    radius: 10
+    width: 680
+    height: 600
+    color: Qt.rgba(theme.loginWindowBackgroundColor.r, theme.loginWindowBackgroundColor.g, theme.loginWindowBackgroundColor.b, 0.95)
+    radius: 15
+    visible: false
 
     property int themeIndex: 0
     property bool isEnglish: true
@@ -16,18 +17,13 @@ Rectangle {
     Settings {
         id: profileSettings
         property string savedUsername: "pahota"
-        property string savedPassword: ""
         property int performance: 7221
-        property int level: 100
-        property bool isLoggedIn: false
-        property bool rememberMe: false
-    }
-
-    Component.onCompleted: {
-        usernameField.text = profileSettings.savedUsername
-        if (profileSettings.rememberMe && profileSettings.savedPassword !== "") {
-            passwordField.text = profileSettings.savedPassword
-            rememberCheckbox.checked = true
+        property string bestScore: "15487"
+        property var puzzlesCompleted: {
+            "easy": 32,
+            "normal": 24,
+            "hard": 11,
+            "impossible": 3
         }
     }
 
@@ -35,19 +31,17 @@ Rectangle {
         id: translations
         property var texts: ({
             "title": { "en": "Player Profile", "ru": "Профиль игрока" },
-            "username": { "en": "Username", "ru": "Имя пользователя" },
-            "password": { "en": "Password", "ru": "Пароль" },
-            "login": { "en": "Login", "ru": "Войти" },
-            "register": { "en": "Register", "ru": "Зарегистрироваться" },
-            "logout": { "en": "Logout", "ru": "Выйти" },
             "welcome": { "en": "Welcome", "ru": "Добро пожаловать" },
-            "remember": { "en": "Remember me", "ru": "Запомнить меня" },
+            "logout": { "en": "Logout", "ru": "Выйти" },
             "close": { "en": "Close", "ru": "Закрыть" },
             "stats": { "en": "Player Statistics", "ru": "Статистика игрока" },
             "performance": { "en": "Performance", "ru": "Производительность" },
-            "accuracy": { "en": "Accuracy", "ru": "Точность" },
-            "level": { "en": "Level", "ru": "Уровень" },
-
+            "bestScore": { "en": "Best Score", "ru": "Лучший результат" },
+            "puzzlesCompleted": { "en": "Puzzles Completed", "ru": "Собрано пятнашек" },
+            "easy": { "en": "Easy (3x3)", "ru": "Легкий (3x3)" },
+            "normal": { "en": "Normal (4x4)", "ru": "Нормальный (4x4)" },
+            "hard": { "en": "Hard (5x5)", "ru": "Сложный (5x5)" },
+            "impossible": { "en": "Impossible (6x6)", "ru": "Невозможный (6x6)" }
         })
 
         function t(key) {
@@ -55,38 +49,61 @@ Rectangle {
         }
     }
 
-    Theme {
+    Item {
         id: theme
-        themeIndex: profileWindow.themeIndex
+        property color loginWindowBackgroundColor: themeIndex === 0 ? "#f5f5f5" : "#1e1e1e"
+        property color loginHeaderGradientStartColor: themeIndex === 0 ? "#3498db" : "#2c3e50"
+        property color loginHeaderGradientEndColor: themeIndex === 0 ? "#2980b9" : "#1a2533"
+        property color loginHeaderTextColor: "#ffffff"
+        property color loginTextColor: themeIndex === 0 ? "#333333" : "#e0e0e0"
+        property color loginHeaderGlowColor: themeIndex === 0 ? Qt.rgba(0, 0, 0, 0.2) : Qt.rgba(0, 0, 0, 0.4)
+        property color loginAvatarCircleColor: themeIndex === 0 ? "#ecf0f1" : "#2c3e50"
+        property color loginAvatarCircleBorderColor: themeIndex === 0 ? "#3498db" : "#1abc9c"
+        property color loginAvatarNumberColor: themeIndex === 0 ? "#3498db" : "#ecf0f1"
+        property color loginInputFieldBackgroundColor: themeIndex === 0 ? "#ffffff" : "#2c3e50"
+        property color loginInputFieldBorderColor: themeIndex === 0 ? "#3498db" : "#1abc9c"
+        property color loginButtonGradientStartColor: themeIndex === 0 ? "#3498db" : "#16a085"
+        property color loginButtonGradientEndColor: themeIndex === 0 ? "#2980b9" : "#1abc9c"
+        property color loginButtonTextColor: "#ffffff"
+        property color loginButtonShadowColor: themeIndex === 0 ? Qt.rgba(0, 0, 0, 0.2) : Qt.rgba(0, 0, 0, 0.4)
+        property color loginWindowShadowColor: themeIndex === 0 ? Qt.rgba(0, 0, 0, 0.3) : Qt.rgba(0, 0, 0, 0.5)
     }
 
     Rectangle {
         id: headerBar
         width: parent.width
-        height: 50
-        color: Qt.rgba(theme.highlightColor.r, theme.highlightColor.g, theme.highlightColor.b, 0.95)
-        radius: 10
+        height: 60
+        color: "transparent"
+        radius: 15
+
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: theme.loginHeaderGradientStartColor }
+            GradientStop { position: 1.0; color: theme.loginHeaderGradientEndColor }
+        }
 
         Text {
             id: titleText
             anchors.centerIn: parent
             text: translations.t("title")
-            color: "white"
+            color: theme.loginHeaderTextColor
             font {
                 family: "Source Sans Pro"
-                pixelSize: 20
+                pixelSize: 24
                 bold: true
             }
-            width: parent.width - 80
+            width: parent.width - 100
             horizontalAlignment: Text.AlignHCenter
-            elide: Text.ElideNone
+            elide: Text.ElideRight
         }
 
         Rectangle {
             width: parent.width
-            height: parent.height / 2
-            anchors.bottom: parent.bottom
-            color: parent.color
+            height: parent.height
+            anchors.top: parent.top
+            radius: 15
+            color: "transparent"
+            gradient: parent.gradient
+            clip: true
         }
     }
 
@@ -106,35 +123,36 @@ Rectangle {
 
     Rectangle {
         id: closeButton
-        width: 30
-        height: 30
-        radius: 15
+        width: 36
+        height: 36
+        radius: 18
         color: "transparent"
 
         anchors {
             right: parent.right
             top: parent.top
-            margins: 10
+            margins: 12
         }
 
         Text {
             anchors.centerIn: parent
             text: "✕"
-            color: "white"
+            color: theme.loginHeaderTextColor
             font.pixelSize: 18
         }
 
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true
-            onEntered: parent.color = "#20ffffff"
+            onEntered: parent.color = Qt.rgba(1, 1, 1, 0.2)
             onExited: parent.color = "transparent"
             onClicked: profileWindow.visible = false
+            cursorShape: Qt.PointingHandCursor
         }
     }
 
     Item {
-        id: contentArea
+        id: profileView
         anchors {
             top: headerBar.bottom
             left: parent.left
@@ -143,341 +161,402 @@ Rectangle {
             margins: 20
         }
 
-        states: [
-            State {
-                name: "loggedOut"
-                when: !profileSettings.isLoggedIn
-                PropertyChanges { target: loginForm; visible: true }
-                PropertyChanges { target: profileView; visible: false }
-            },
-            State {
-                name: "loggedIn"
-                when: profileSettings.isLoggedIn
-                PropertyChanges { target: loginForm; visible: false }
-                PropertyChanges { target: profileView; visible: true }
+        Column {
+            anchors.centerIn: parent
+            width: parent.width - 40
+            spacing: 20
+
+            Text {
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                text: translations.t("welcome") + ", " + profileSettings.savedUsername + "!"
+                color: theme.loginTextColor
+                font {
+                    pixelSize: 24
+                    bold: true
+                }
+                wrapMode: Text.WordWrap
             }
-        ]
 
-        Item {
-            id: loginForm
-            visible: true
-            anchors.fill: parent
-
-            Column {
-                anchors.centerIn: parent
-                width: parent.width - 40
-                spacing: 20
+            Rectangle {
+                width: 100
+                height: 100
+                radius: 50
+                color: theme.loginAvatarCircleColor
+                border.color: theme.loginAvatarCircleBorderColor
+                border.width: 3
+                anchors.horizontalCenter: parent.horizontalCenter
 
                 Text {
-                    text: translations.t("username")
-                    color: theme.textColor
-                    font.pixelSize: 16
+                    anchors.centerIn: parent
+                    text: profileSettings.savedUsername.charAt(0).toUpperCase()
+                    color: theme.loginAvatarNumberColor
+                    font {
+                        pixelSize: 48
+                        bold: true
+                    }
                 }
 
-                Rectangle {
-                    id: usernameRect
-                    width: parent.width
-                    height: 40
+                layer.enabled: true
+                layer.effect: DropShadow {
+                    transparentBorder: true
+                    horizontalOffset: 0
+                    verticalOffset: 2
                     radius: 8
-                    color: Qt.rgba(theme.tileBackgroundColor.r, theme.tileBackgroundColor.g, theme.tileBackgroundColor.b, 0.8)
-                    border.color: theme.tileBorderColor
-                    border.width: 1
-
-                    TextInput {
-                        id: usernameField
-                        anchors {
-                            fill: parent
-                            margins: 10
-                        }
-                        color: theme.tileTextColor
-                        font.pixelSize: 16
-                        clip: true
-                    }
-                }
-
-                Text {
-                    text: translations.t("password")
-                    color: theme.textColor
-                    font.pixelSize: 16
-                }
-
-                Rectangle {
-                    id: passwordRect
-                    width: parent.width
-                    height: 40
-                    radius: 8
-                    color: Qt.rgba(theme.tileBackgroundColor.r, theme.tileBackgroundColor.g, theme.tileBackgroundColor.b, 0.8)
-                    border.color: theme.tileBorderColor
-                    border.width: 1
-
-                    TextInput {
-                        id: passwordField
-                        anchors {
-                            fill: parent
-                            margins: 10
-                        }
-                        color: theme.tileTextColor
-                        font.pixelSize: 16
-                        echoMode: TextInput.Password
-                        clip: true
-                    }
-                }
-
-                Row {
-                    spacing: 10
-
-                    CheckBox {
-                        id: rememberCheckbox
-                        indicator: Rectangle {
-                            implicitWidth: 20
-                            implicitHeight: 20
-                            radius: 3
-                            border.color: theme.tileBorderColor
-
-                            Rectangle {
-                                width: 10
-                                height: 10
-                                radius: 2
-                                color: theme.highlightColor
-                                anchors.centerIn: parent
-                                visible: rememberCheckbox.checked
-                            }
-                        }
-
-                        contentItem: Text {
-                            text: translations.t("remember")
-                            color: theme.textColor
-                            font.pixelSize: 14
-                            leftPadding: rememberCheckbox.indicator.width + 10
-                            verticalAlignment: Text.AlignVCenter
-                        }
-                    }
-                }
-
-                Row {
-                    width: parent.width
-                    spacing: 10
-
-                    Rectangle {
-                        width: (parent.width - 10) / 2
-                        height: 40
-                        radius: 8
-                        color: Qt.rgba(theme.highlightColor.r, theme.highlightColor.g, theme.highlightColor.b, 0.95)
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: translations.t("login")
-                            color: "white"
-                            font.pixelSize: 16
-                            font.bold: true
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            onEntered: parent.color = Qt.lighter(theme.highlightColor, 1.1)
-                            onExited: parent.color = Qt.rgba(theme.highlightColor.r, theme.highlightColor.g, theme.highlightColor.b, 0.95)
-                            onClicked: {
-                                if (usernameField.text.length > 0 && passwordField.text.length > 0) {
-                                    profileSettings.savedUsername = usernameField.text
-                                    profileSettings.isLoggedIn = true
-
-                                    if (rememberCheckbox.checked) {
-                                        profileSettings.savedPassword = passwordField.text
-                                        profileSettings.rememberMe = true
-                                    } else {
-                                        profileSettings.savedPassword = ""
-                                        profileSettings.rememberMe = false
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Rectangle {
-                        width: (parent.width - 10) / 2
-                        height: 40
-                        radius: 8
-                        color: "transparent"
-                        border.color: theme.highlightColor
-                        border.width: 1
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: translations.t("register")
-                            color: theme.highlightColor
-                            font.pixelSize: 16
-                            font.bold: true
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            onEntered: parent.color = Qt.alpha(theme.highlightColor, 0.1)
-                            onExited: parent.color = "transparent"
-                            onClicked: {
-                                if (usernameField.text.length > 0 && passwordField.text.length > 0) {
-                                    profileSettings.savedUsername = usernameField.text
-                                    profileSettings.performance = 0
-                                    profileSettings.accuracy = 0
-                                    profileSettings.level = 1
-                                    profileSettings.isLoggedIn = true
-
-                                    if (rememberCheckbox.checked) {
-                                        profileSettings.savedPassword = passwordField.text
-                                        profileSettings.rememberMe = true
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    samples: 17
+                    color: theme.loginHeaderGlowColor
                 }
             }
-        }
 
-        Item {
-            id: profileView
-            visible: false
-            anchors.fill: parent
+            Rectangle {
+                width: parent.width
+                height: 280
+                radius: 15
+                color: Qt.rgba(theme.loginInputFieldBackgroundColor.r, theme.loginInputFieldBackgroundColor.g, theme.loginInputFieldBackgroundColor.b, 0.8)
+                border.color: theme.loginInputFieldBorderColor
+                border.width: 1
 
-            Column {
-                anchors.centerIn: parent
-                width: parent.width - 40
-                spacing: 20
-
-                Text {
-                    width: parent.width
-                    horizontalAlignment: Text.AlignHCenter
-                    text: translations.t("welcome") + ", " + profileSettings.savedUsername + "!"
-                    color: theme.textColor
-                    font.pixelSize: 24
-                    font.bold: true
-                    wrapMode: Text.WordWrap
+                layer.enabled: true
+                layer.effect: DropShadow {
+                    transparentBorder: true
+                    horizontalOffset: 0
+                    verticalOffset: 2
+                    radius: 6
+                    samples: 17
+                    color: Qt.rgba(0, 0, 0, 0.2)
                 }
 
-                Rectangle {
-                    width: 100
-                    height: 100
-                    radius: 50
-                    color: Qt.rgba(theme.tileBackgroundColor.r, theme.tileBackgroundColor.g, theme.tileBackgroundColor.b, 0.8)
-                    border.color: theme.tileBorderColor
-                    border.width: 2
-                    anchors.horizontalCenter: parent.horizontalCenter
+                Column {
+                    anchors {
+                        fill: parent
+                        margins: 15
+                    }
+                    spacing: 15
 
                     Text {
-                        anchors.centerIn: parent
-                        text: profileSettings.savedUsername.charAt(0).toUpperCase()
-                        color: theme.highlightColor
-                        font.pixelSize: 48
-                        font.bold: true
+                        text: translations.t("stats")
+                        color: theme.loginTextColor
+                        font {
+                            pixelSize: 20
+                            bold: true
+                        }
                     }
-                }
-
-                Rectangle {
-                    width: parent.width
-                    height: 150
-                    radius: 10
-                    color: Qt.rgba(theme.tileBackgroundColor.r, theme.tileBackgroundColor.g, theme.tileBackgroundColor.b, 0.8)
-                    border.color: theme.tileBorderColor
-                    border.width: 1
 
                     Column {
-                        anchors {
-                            fill: parent
-                            margins: 15
-                        }
+                        width: parent.width
                         spacing: 15
 
-                        Text {
-                            text: translations.t("stats")
-                            color: theme.tileTextColor
-                            font {
-                                pixelSize: 18
-                                bold: true
-                            }
-                        }
-
-                        Grid {
+                        Rectangle {
                             width: parent.width
-                            columns: 2
-                            rowSpacing: 10
-                            columnSpacing: 10
+                            height: 30
+                            radius: 5
+                            color: Qt.rgba(1, 1, 1, 0.1)
 
                             Text {
                                 text: translations.t("performance") + ":"
-                                color: theme.tileTextColor
+                                color: theme.loginTextColor
                                 font.pixelSize: 16
-                            }
-
-                            Text {
-                                text: profileSettings.performance + "pp"
-                                color: theme.highlightColor
-                                font {
-                                    pixelSize: 16
-                                    bold: true
+                                anchors {
+                                    left: parent.left
+                                    leftMargin: 10
+                                    verticalCenter: parent.verticalCenter
                                 }
                             }
 
                             Text {
-                                text: translations.t("accuracy") + ":"
-                                color: theme.tileTextColor
-                                font.pixelSize: 16
-                            }
-
-                            Text {
-                                text: profileSettings.accuracy + "%"
-                                color: theme.highlightColor
+                                text: profileSettings.performance + " pp"
+                                color: theme.loginInputFieldBorderColor
                                 font {
                                     pixelSize: 16
                                     bold: true
                                 }
+                                anchors {
+                                    right: parent.right
+                                    rightMargin: 10
+                                    verticalCenter: parent.verticalCenter
+                                }
                             }
+                        }
+
+                        Rectangle {
+                            width: parent.width
+                            height: 30
+                            radius: 5
+                            color: Qt.rgba(1, 1, 1, 0.1)
 
                             Text {
-                                text: translations.t("level") + ":"
-                                color: theme.tileTextColor
+                                text: translations.t("bestScore") + ":"
+                                color: theme.loginTextColor
                                 font.pixelSize: 16
+                                anchors {
+                                    left: parent.left
+                                    leftMargin: 10
+                                    verticalCenter: parent.verticalCenter
+                                }
                             }
 
                             Text {
-                                text: "Lv" + profileSettings.level
-                                color: theme.highlightColor
+                                text: profileSettings.bestScore
+                                color: theme.loginInputFieldBorderColor
                                 font {
                                     pixelSize: 16
                                     bold: true
+                                }
+                                anchors {
+                                    right: parent.right
+                                    rightMargin: 10
+                                    verticalCenter: parent.verticalCenter
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: parent.width
+                            height: 30
+                            radius: 5
+                            color: Qt.rgba(1, 1, 1, 0.1)
+
+                            Text {
+                                text: translations.t("puzzlesCompleted") + ":"
+                                color: theme.loginTextColor
+                                font.pixelSize: 16
+                                font.bold: true
+                                anchors {
+                                    left: parent.left
+                                    leftMargin: 10
+                                    verticalCenter: parent.verticalCenter
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: parent.width - 10
+                            height: 30
+                            radius: 5
+                            color: Qt.rgba(1, 1, 1, 0.08)
+                            anchors.left: parent.left
+                            anchors.leftMargin: 10
+
+                            Text {
+                                text: translations.t("easy") + ":"
+                                color: theme.loginTextColor
+                                font.pixelSize: 16
+                                anchors {
+                                    left: parent.left
+                                    leftMargin: 10
+                                    verticalCenter: parent.verticalCenter
+                                }
+                            }
+
+                            Text {
+                                text: profileSettings.puzzlesCompleted.easy
+                                color: theme.loginInputFieldBorderColor
+                                font {
+                                    pixelSize: 16
+                                    bold: true
+                                }
+                                anchors {
+                                    right: parent.right
+                                    rightMargin: 10
+                                    verticalCenter: parent.verticalCenter
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: parent.width - 10
+                            height: 30
+                            radius: 5
+                            color: Qt.rgba(1, 1, 1, 0.08)
+                            anchors.left: parent.left
+                            anchors.leftMargin: 10
+
+                            Text {
+                                text: translations.t("normal") + ":"
+                                color: theme.loginTextColor
+                                font.pixelSize: 16
+                                anchors {
+                                    left: parent.left
+                                    leftMargin: 10
+                                    verticalCenter: parent.verticalCenter
+                                }
+                            }
+
+                            Text {
+                                text: profileSettings.puzzlesCompleted.normal
+                                color: theme.loginInputFieldBorderColor
+                                font {
+                                    pixelSize: 16
+                                    bold: true
+                                }
+                                anchors {
+                                    right: parent.right
+                                    rightMargin: 10
+                                    verticalCenter: parent.verticalCenter
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: parent.width - 10
+                            height: 30
+                            radius: 5
+                            color: Qt.rgba(1, 1, 1, 0.08)
+                            anchors.left: parent.left
+                            anchors.leftMargin: 10
+
+                            Text {
+                                text: translations.t("hard") + ":"
+                                color: theme.loginTextColor
+                                font.pixelSize: 16
+                                anchors {
+                                    left: parent.left
+                                    leftMargin: 10
+                                    verticalCenter: parent.verticalCenter
+                                }
+                            }
+
+                            Text {
+                                text: profileSettings.puzzlesCompleted.hard
+                                color: theme.loginInputFieldBorderColor
+                                font {
+                                    pixelSize: 16
+                                    bold: true
+                                }
+                                anchors {
+                                    right: parent.right
+                                    rightMargin: 10
+                                    verticalCenter: parent.verticalCenter
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            width: parent.width - 10
+                            height: 30
+                            radius: 5
+                            color: Qt.rgba(1, 1, 1, 0.08)
+                            anchors.left: parent.left
+                            anchors.leftMargin: 10
+
+                            Text {
+                                text: translations.t("impossible") + ":"
+                                color: theme.loginTextColor
+                                font.pixelSize: 16
+                                anchors {
+                                    left: parent.left
+                                    leftMargin: 10
+                                    verticalCenter: parent.verticalCenter
+                                }
+                            }
+
+                            Text {
+                                text: profileSettings.puzzlesCompleted.impossible
+                                color: theme.loginInputFieldBorderColor
+                                font {
+                                    pixelSize: 16
+                                    bold: true
+                                }
+                                anchors {
+                                    right: parent.right
+                                    rightMargin: 10
+                                    verticalCenter: parent.verticalCenter
                                 }
                             }
                         }
                     }
                 }
+            }
+
+            Row {
+                width: parent.width
+                spacing: 10
+                anchors.horizontalCenter: parent.horizontalCenter
 
                 Rectangle {
-                    width: parent.width / 2
-                    height: 40
-                    radius: 8
-                    color: Qt.rgba(theme.highlightColor.r, theme.highlightColor.g, theme.highlightColor.b, 0.95)
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: parent.width / 2 - 5
+                    height: 50
+                    radius: 25
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: theme.loginButtonGradientStartColor }
+                        GradientStop { position: 1.0; color: theme.loginButtonGradientEndColor }
+                    }
 
                     Text {
                         anchors.centerIn: parent
                         text: translations.t("logout")
-                        color: "white"
-                        font.pixelSize: 16
-                        font.bold: true
+                        color: theme.loginButtonTextColor
+                        font {
+                            pixelSize: 18
+                            bold: true
+                        }
                     }
 
                     MouseArea {
                         anchors.fill: parent
                         hoverEnabled: true
-                        onEntered: parent.color = Qt.lighter(theme.highlightColor, 1.1)
-                        onExited: parent.color = Qt.rgba(theme.highlightColor.r, theme.highlightColor.g, theme.highlightColor.b, 0.95)
+                        onEntered: parent.opacity = 0.9
+                        onExited: parent.opacity = 1.0
+                        cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            profileSettings.isLoggedIn = false
-                            if (!rememberCheckbox.checked) {
-                                usernameField.text = profileSettings.savedUsername
-                                passwordField.text = ""
+                            var loginSettings = Qt.createQmlObject('
+                                import Qt.labs.settings 1.0
+                                Settings {
+                                    property bool isLoggedIn: false
+                                }
+                            ', profileWindow, "LoginSettings");
+                            loginSettings.isLoggedIn = false;
+                            profileWindow.visible = false;
+
+                            var loginComponent = Qt.createComponent("Login.qml")
+                            if (loginComponent.status === Component.Ready) {
+                                var loginWindow = loginComponent.createObject(profileWindow.parent, {
+                                    "themeIndex": profileWindow.themeIndex,
+                                    "isEnglish": profileWindow.isEnglish
+                                })
+                                loginWindow.visible = true
+                            } else if (loginComponent.status === Component.Error) {
+                                console.error("Error creating Login window:", loginComponent.errorString())
                             }
                         }
+                    }
+
+                    layer.enabled: true
+                    layer.effect: DropShadow {
+                        transparentBorder: true
+                        horizontalOffset: 0
+                        verticalOffset: 3
+                        radius: 8
+                        samples: 17
+                        color: theme.loginButtonShadowColor
+                    }
+                }
+
+                Rectangle {
+                    width: parent.width / 2 - 5
+                    height: 50
+                    radius: 25
+                    color: "transparent"
+                    border.color: theme.loginInputFieldBorderColor
+                    border.width: 2
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: translations.t("close")
+                        color: theme.loginInputFieldBorderColor
+                        font {
+                            pixelSize: 18
+                            bold: true
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onEntered: parent.color = Qt.rgba(theme.loginInputFieldBorderColor.r, theme.loginInputFieldBorderColor.g, theme.loginInputFieldBorderColor.b, 0.1)
+                        onExited: parent.color = "transparent"
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: profileWindow.visible = false
                     }
                 }
             }
@@ -487,10 +566,10 @@ Rectangle {
     layer.enabled: true
     layer.effect: DropShadow {
         transparentBorder: true
-        horizontalOffset: 5
+        horizontalOffset: 0
         verticalOffset: 5
-        radius: 15
-        samples: 20
-        color: "#80000000"
+        radius: 12
+        samples: 25
+        color: theme.loginWindowShadowColor
     }
 }

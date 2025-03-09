@@ -15,42 +15,11 @@ Rectangle {
     property int themeIndex: 0
     property bool isEnglish: true
     property int maxHighscores: 10
-    property var categories: ["all", "easy", "medium", "hard"]
+    property var categories: ["all", "easy", "normal", "hard"]
     property string currentCategory: "all"
     property bool canExport: true
-
+    property QtObject translations
     signal closed()
-
-    QtObject {
-        id: translations
-        property var texts: ({
-            "highscores": { "en": "Highscores", "ru": "Рекорды" },
-            "rank": { "en": "Rank", "ru": "Место" },
-            "player": { "en": "Player", "ru": "Игрок" },
-            "time": { "en": "Time", "ru": "Время" },
-            "moves": { "en": "Moves", "ru": "Ходы" },
-            "date": { "en": "Date", "ru": "Дата" },
-            "difficulty": { "en": "Difficulty", "ru": "Сложность" },
-            "clearAll": { "en": "Clear All", "ru": "Очистить" },
-            "back": { "en": "Back", "ru": "Назад" },
-            "noRecords": { "en": "No records yet", "ru": "Нет рекордов" },
-            "enterName": { "en": "Enter Your Name", "ru": "Введите имя" },
-            "save": { "en": "Save", "ru": "Сохранить" },
-            "cancel": { "en": "Cancel", "ru": "Отмена" },
-            "congrats": { "en": "New Highscore!", "ru": "Новый рекорд!" },
-            "export": { "en": "Export", "ru": "Экспорт" },
-            "all": { "en": "All", "ru": "Все" },
-            "easy": { "en": "Easy", "ru": "Легкий" },
-            "medium": { "en": "Medium", "ru": "Средний" },
-            "hard": { "en": "Hard", "ru": "Сложный" },
-            "share": { "en": "Share", "ru": "Поделиться" },
-            "closeWindow": { "en": "X", "ru": "X" }
-        })
-
-        function t(key) {
-            return texts[key][isEnglish ? "en" : "ru"]
-        }
-    }
 
     Settings {
         id: highscoresSettings
@@ -63,7 +32,7 @@ Rectangle {
         width: 30
         height: 30
         radius: width / 2
-        color: closeBtn.hovered ? Qt.darker(theme.counterBackgroundColor, 1.2) : theme.counterBackgroundColor
+        color: closeMouseArea.containsMouse ? Qt.darker(theme.counterBackgroundColor, 1.2) : theme.counterBackgroundColor
         anchors {
             top: parent.top
             right: parent.right
@@ -71,23 +40,32 @@ Rectangle {
             rightMargin: 10
         }
 
-        Button {
-            id: closeBtn
+        Text {
+            text: translations.t("closeWindow")
+            color: theme.counterTextColor
+            font.pixelSize: 16
+            font.bold: true
+            anchors.centerIn: parent
+        }
+
+        MouseArea {
+            id: closeMouseArea
             anchors.fill: parent
-            background: Rectangle {
-                color: "transparent"
-            }
-
-            contentItem: Text {
-                text: translations.t("closeWindow")
-                color: theme.counterTextColor
-                font.pixelSize: 16
-                font.bold: true
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-
+            hoverEnabled: true
             onClicked: highscoresWindow.closed()
+
+            PropertyAnimation {
+                target: closeButtonRect
+                property: "scale"
+                to: closeMouseArea.pressed ? 0.9 : closeMouseArea.containsMouse ? 1.1 : 1.0
+                duration: 150
+                easing.type: Easing.OutQuad
+                running: true
+            }
+        }
+
+        Behavior on color {
+            ColorAnimation { duration: 150 }
         }
     }
 
@@ -128,40 +106,52 @@ Rectangle {
             topMargin: 15
             horizontalCenter: parent.horizontalCenter
         }
-        spacing: 10
+        spacing: 20
 
         Repeater {
             model: categories
 
-            Button {
-                id: categoryButton
-                width: 80
+            Item {
+                width: 120
                 height: 35
 
                 property bool isSelected: currentCategory === modelData
 
-                contentItem: Text {
+                Rectangle {
+                    id: categoryButtonBg
+                    anchors.fill: parent
+                    radius: 5
+                    color: isSelected ? theme.tileBorderColor : theme.counterBackgroundColor
+                    border.width: 1
+                    border.color: theme.tileBorderColor
+
+                    Behavior on color {
+                        ColorAnimation { duration: 200 }
+                    }
+
+                    scale: categoryMouseArea.pressed ? 0.95 : categoryMouseArea.containsMouse ? 1.05 : 1.0
+
+                    Behavior on scale {
+                        NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                    }
+                }
+
+                Text {
+                    anchors.centerIn: parent
                     text: translations.t(modelData)
                     font.family: "Source Sans Pro"
                     font.pixelSize: 14
                     color: isSelected ? theme.windowColor : theme.counterTextColor
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
                 }
 
-                background: Rectangle {
-                    radius: 5
-                    color: isSelected ? theme.tileBorderColor :
-                           categoryButton.pressed ? Qt.darker(theme.counterBackgroundColor, 1.2) :
-                           categoryButton.hovered ? Qt.darker(theme.counterBackgroundColor, 1.1) :
-                           theme.counterBackgroundColor
-                    border.width: 1
-                    border.color: theme.tileBorderColor
-                }
-
-                onClicked: {
-                    currentCategory = modelData
-                    filterScores()
+                MouseArea {
+                    id: categoryMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: {
+                        currentCategory = modelData
+                        filterScores()
+                    }
                 }
             }
         }
@@ -418,129 +408,185 @@ Rectangle {
         }
         spacing: 20
 
-        Button {
-            id: clearButton
-            text: translations.t("clearAll")
+        Item {
             width: 120
             height: 40
 
-            contentItem: Text {
-                text: clearButton.text
-                font {
-                    family: "Source Sans Pro"
-                    pixelSize: 16
-                }
-                color: theme.counterTextColor
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-
-            background: Rectangle {
+            Rectangle {
+                id: clearButtonBg
+                anchors.fill: parent
                 radius: 5
-                color: clearButton.pressed ? Qt.darker(theme.counterBackgroundColor, 1.2) :
-                       clearButton.hovered ? Qt.darker(theme.counterBackgroundColor, 1.1) :
-                       theme.counterBackgroundColor
-                border {
-                    width: 1
-                    color: theme.tileBorderColor
+                color: theme.counterBackgroundColor
+                border.width: 1
+                border.color: theme.tileBorderColor
+
+                scale: clearMouseArea.pressed ? 0.95 : clearMouseArea.containsMouse ? 1.05 : 1.0
+
+                Behavior on scale {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                }
+
+                layer.enabled: true
+                layer.effect: DropShadow {
+                    transparentBorder: true
+                    horizontalOffset: clearMouseArea.containsMouse ? 2 : 1
+                    verticalOffset: clearMouseArea.containsMouse ? 2 : 1
+                    radius: clearMouseArea.containsMouse ? 6 : 3
+                    samples: 12
+                    color: "#33000000"
                 }
             }
 
-            onClicked: confirmClearDialog.open()
+            Text {
+                anchors.centerIn: parent
+                text: translations.t("clearAll")
+                font.family: "Source Sans Pro"
+                font.pixelSize: 16
+                color: theme.counterTextColor
+            }
+
+            MouseArea {
+                id: clearMouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                onClicked: confirmClearDialog.open()
+            }
         }
 
-        Button {
-            id: exportButton
-            text: translations.t("export")
+        Item {
             width: 120
             height: 40
             visible: canExport
 
-            contentItem: Text {
-                text: exportButton.text
-                font {
-                    family: "Source Sans Pro"
-                    pixelSize: 16
-                }
-                color: theme.counterTextColor
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-
-            background: Rectangle {
+            Rectangle {
+                id: exportButtonBg
+                anchors.fill: parent
                 radius: 5
-                color: exportButton.pressed ? Qt.darker(theme.counterBackgroundColor, 1.2) :
-                       exportButton.hovered ? Qt.darker(theme.counterBackgroundColor, 1.1) :
-                       theme.counterBackgroundColor
-                border {
-                    width: 1
-                    color: theme.tileBorderColor
+                color: theme.counterBackgroundColor
+                border.width: 1
+                border.color: theme.tileBorderColor
+
+                scale: exportMouseArea.pressed ? 0.95 : exportMouseArea.containsMouse ? 1.05 : 1.0
+
+                Behavior on scale {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                }
+
+                layer.enabled: true
+                layer.effect: DropShadow {
+                    transparentBorder: true
+                    horizontalOffset: exportMouseArea.containsMouse ? 2 : 1
+                    verticalOffset: exportMouseArea.containsMouse ? 2 : 1
+                    radius: exportMouseArea.containsMouse ? 6 : 3
+                    samples: 12
+                    color: "#33000000"
                 }
             }
 
-            onClicked: exportScores()
+            Text {
+                anchors.centerIn: parent
+                text: translations.t("export")
+                font.family: "Source Sans Pro"
+                font.pixelSize: 16
+                color: theme.counterTextColor
+            }
+
+            MouseArea {
+                id: exportMouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                onClicked: exportScores()
+            }
         }
 
-        Button {
-            id: shareButton
-            text: translations.t("share")
+        Item {
             width: 120
             height: 40
 
-            contentItem: Text {
-                text: shareButton.text
-                font {
-                    family: "Source Sans Pro"
-                    pixelSize: 16
-                }
-                color: theme.counterTextColor
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-
-            background: Rectangle {
+            Rectangle {
+                id: shareButtonBg
+                anchors.fill: parent
                 radius: 5
-                color: shareButton.pressed ? Qt.darker(theme.counterBackgroundColor, 1.2) :
-                       shareButton.hovered ? Qt.darker(theme.counterBackgroundColor, 1.1) :
-                       theme.counterBackgroundColor
-                border {
-                    width: 1
-                    color: theme.tileBorderColor
+                color: theme.counterBackgroundColor
+                border.width: 1
+                border.color: theme.tileBorderColor
+
+                scale: shareMouseArea.pressed ? 0.95 : shareMouseArea.containsMouse ? 1.05 : 1.0
+
+                Behavior on scale {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                }
+
+                layer.enabled: true
+                layer.effect: DropShadow {
+                    transparentBorder: true
+                    horizontalOffset: shareMouseArea.containsMouse ? 2 : 1
+                    verticalOffset: shareMouseArea.containsMouse ? 2 : 1
+                    radius: shareMouseArea.containsMouse ? 6 : 3
+                    samples: 12
+                    color: "#33000000"
                 }
             }
 
-            onClicked: shareScores()
+            Text {
+                anchors.centerIn: parent
+                text: translations.t("share")
+                font.family: "Source Sans Pro"
+                font.pixelSize: 16
+                color: theme.counterTextColor
+            }
+
+            MouseArea {
+                id: shareMouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                onClicked: shareScores()
+            }
         }
 
-        Button {
-            id: backButton
-            text: translations.t("back")
+        Item {
             width: 120
             height: 40
 
-            contentItem: Text {
-                text: backButton.text
-                font {
-                    family: "Source Sans Pro"
-                    pixelSize: 16
-                }
-                color: theme.counterTextColor
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-            }
-
-            background: Rectangle {
+            Rectangle {
+                id: backButtonBg
+                anchors.fill: parent
                 radius: 5
-                color: backButton.pressed ? Qt.darker(theme.counterBackgroundColor, 1.2) :
-                       backButton.hovered ? Qt.darker(theme.counterBackgroundColor, 1.1) :
-                       theme.counterBackgroundColor
-                border {
-                    width: 1
-                    color: theme.tileBorderColor
+                color: theme.counterBackgroundColor
+                border.width: 1
+                border.color: theme.tileBorderColor
+
+                scale: backMouseArea.pressed ? 0.95 : backMouseArea.containsMouse ? 1.05 : 1.0
+
+                Behavior on scale {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                }
+
+                layer.enabled: true
+                layer.effect: DropShadow {
+                    transparentBorder: true
+                    horizontalOffset: backMouseArea.containsMouse ? 2 : 1
+                    verticalOffset: backMouseArea.containsMouse ? 2 : 1
+                    radius: backMouseArea.containsMouse ? 6 : 3
+                    samples: 12
+                    color: "#33000000"
                 }
             }
 
-            onClicked: highscoresWindow.closed()
+            Text {
+                anchors.centerIn: parent
+                text: translations.t("back")
+                font.family: "Source Sans Pro"
+                font.pixelSize: 16
+                color: theme.counterTextColor
+            }
+
+            MouseArea {
+                id: backMouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                onClicked: highscoresWindow.visible = false
+            }
         }
     }
 
@@ -554,7 +600,7 @@ Rectangle {
 
         property int timeScore: 0
         property int movesScore: 0
-        property string difficultyLevel: "medium"
+        property string difficultyLevel: "normal"
 
         background: Rectangle {
             color: theme.counterBackgroundColor

@@ -6,8 +6,8 @@ import Qt5Compat.GraphicalEffects
 
 Item {
     id: screenSettingsView
-    width: parent.width - 20
-    height: 620
+    width: parent.width
+    height: 560
     clip: true
 
     property int themeIndex: 0
@@ -77,7 +77,7 @@ Item {
                 Layout.fillWidth: true
                 columns: 2
                 columnSpacing: 25
-                rowSpacing: 18
+                rowSpacing: a8
 
                 Text {
                     text: translations.t("brightness")
@@ -138,6 +138,7 @@ Item {
                             Behavior on color {
                                 ColorAnimation {
                                     duration: 150
+                                    easing.type: Easing.InOutQuad
                                 }
                             }
                         }
@@ -215,6 +216,7 @@ Item {
                             Behavior on color {
                                 ColorAnimation {
                                     duration: 150
+                                    easing.type: Easing.InOutQuad
                                 }
                             }
                         }
@@ -247,6 +249,8 @@ Item {
                     id: autoAdjustSwitch
                     checked: true
                     hoverEnabled: true
+                    Layout.maximumWidth: parent.width / 2
+                    Layout.fillWidth: true
 
                     onCheckedChanged: {
                         brightnessSlider.enabled = !checked
@@ -267,6 +271,7 @@ Item {
                         Behavior on color {
                             ColorAnimation {
                                 duration: 150
+                                easing.type: Easing.InOutQuad
                             }
                         }
 
@@ -297,17 +302,16 @@ Item {
                         color: appTheme.textSecondaryColor
                         leftPadding: autoAdjustSwitch.indicator.width + 12
                         verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
                     }
                 }
             }
 
             Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 2
+                Layout.preferredHeight: 1
                 color: appTheme.accentColor
                 opacity: 0.2
-                Layout.topMargin: 5
-                Layout.bottomMargin: 5
             }
 
             Text {
@@ -341,6 +345,7 @@ Item {
                 ComboBox {
                     id: windowModeComboBox
                     Layout.fillWidth: true
+                    Layout.maximumWidth: parent.width / 2
                     model: [
                         translations.t("windowed"),
                         translations.t("fullscreen")
@@ -387,14 +392,22 @@ Item {
                     background: Rectangle {
                         implicitWidth: 120
                         implicitHeight: 42
-                        color: windowModeComboBox.hovered ? Qt.rgba(appTheme.accentColor.r, appTheme.accentColor.g, appTheme.accentColor.b, 0.1) : "transparent"
+                        color: "transparent"
                         border.color: appTheme.accentColor
                         border.width: 2
                         radius: 6
 
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 150
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 6
+                            color: windowModeComboBox.hovered ? appTheme.accentColor : "transparent"
+                            opacity: windowModeComboBox.hovered ? 0.1 : 0
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: 200
+                                    easing.type: Easing.InOutQuad
+                                }
                             }
                         }
                     }
@@ -410,8 +423,7 @@ Item {
                             implicitHeight: contentHeight
                             model: windowModeComboBox.popup.visible ? windowModeComboBox.delegateModel : null
                             currentIndex: windowModeComboBox.highlightedIndex
-
-                            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOff }
                         }
 
                         background: Rectangle {
@@ -447,6 +459,7 @@ Item {
                 ComboBox {
                     id: resolutionComboBox
                     Layout.fillWidth: true
+                    Layout.maximumWidth: parent.width / 2
                     model: [
                         "1280 × 720",
                         "1366 × 768",
@@ -505,16 +518,23 @@ Item {
                     background: Rectangle {
                         implicitWidth: 120
                         implicitHeight: 42
-                        color: resolutionComboBox.enabled && resolutionComboBox.hovered ?
-                               Qt.rgba(appTheme.accentColor.r, appTheme.accentColor.g, appTheme.accentColor.b, 0.1) : "transparent"
+                        color: "transparent"
                         border.color: appTheme.accentColor
                         border.width: 2
                         radius: 6
                         opacity: resolutionComboBox.enabled ? 1 : 0.5
 
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 150
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 6
+                            color: resolutionComboBox.enabled && resolutionComboBox.hovered ? appTheme.accentColor : "transparent"
+                            opacity: resolutionComboBox.enabled && resolutionComboBox.hovered ? 0.1 : 0
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: 200
+                                    easing.type: Easing.InOutQuad
+                                }
                             }
                         }
                     }
@@ -530,8 +550,7 @@ Item {
                             implicitHeight: contentHeight
                             model: resolutionComboBox.popup.visible ? resolutionComboBox.delegateModel : null
                             currentIndex: resolutionComboBox.highlightedIndex
-
-                            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOff }
                         }
 
                         background: Rectangle {
@@ -567,6 +586,7 @@ Item {
                 ComboBox {
                     id: refreshRateComboBox
                     Layout.fillWidth: true
+                    Layout.maximumWidth: parent.width / 2
                     model: ["60 Hz", "75 Hz", "120 Hz", "144 Hz", "165 Hz", "240 Hz"]
                     currentIndex: 0
                     enabled: !windowModeComboBox.isFullscreen
@@ -610,16 +630,23 @@ Item {
                     background: Rectangle {
                         implicitWidth: 120
                         implicitHeight: 42
-                        color: refreshRateComboBox.enabled && refreshRateComboBox.hovered ?
-                               Qt.rgba(appTheme.accentColor.r, appTheme.accentColor.g, appTheme.accentColor.b, 0.1) : "transparent"
+                        color: "transparent"
                         border.color: appTheme.accentColor
                         border.width: 2
                         radius: 6
                         opacity: refreshRateComboBox.enabled ? 1 : 0.5
 
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 150
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 6
+                            color: refreshRateComboBox.enabled && refreshRateComboBox.hovered ? appTheme.accentColor : "transparent"
+                            opacity: refreshRateComboBox.enabled && refreshRateComboBox.hovered ? 0.1 : 0
+
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: 200
+                                    easing.type: Easing.InOutQuad
+                                }
                             }
                         }
                     }
@@ -635,8 +662,7 @@ Item {
                             implicitHeight: contentHeight
                             model: refreshRateComboBox.popup.visible ? refreshRateComboBox.delegateModel : null
                             currentIndex: refreshRateComboBox.highlightedIndex
-
-                            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+                            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AlwaysOff }
                         }
 
                         background: Rectangle {
@@ -672,6 +698,8 @@ Item {
                     id: vsyncSwitch
                     checked: true
                     hoverEnabled: true
+                    Layout.maximumWidth: parent.width / 2
+                    Layout.fillWidth: true
 
                     onCheckedChanged: settingsChanged()
 
@@ -688,6 +716,7 @@ Item {
                         Behavior on color {
                             ColorAnimation {
                                 duration: 150
+                                easing.type: Easing.InOutQuad
                             }
                         }
 
@@ -718,13 +747,14 @@ Item {
                         color: appTheme.textSecondaryColor
                         leftPadding: vsyncSwitch.indicator.width + 12
                         verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
                     }
                 }
             }
 
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
-                Layout.topMargin: 30
+                Layout.topMargin: 10
                 Layout.bottomMargin: 10
                 spacing: 25
 
@@ -732,7 +762,6 @@ Item {
                     id: testButton
                     text: translations.t("testSettings")
                     hoverEnabled: true
-
                     contentItem: Text {
                         text: parent.text
                         font {
@@ -743,38 +772,121 @@ Item {
                         color: "#ffffff"
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
+                        opacity: testButton.enabled ? 1.0 : 0.6
+                        Behavior on opacity {
+                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                        }
                     }
-
                     background: Rectangle {
                         implicitWidth: 170
                         implicitHeight: 44
                         radius: 22
-                        color: testButton.pressed ? Qt.darker(appTheme.accentColor, 1.2) :
-                               testButton.hovered ? Qt.lighter(appTheme.accentColor, 1.1) : appTheme.accentColor
+                        color: appTheme.accentColor
 
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 150
+                        Rectangle {
+                            id: hoverEffect
+                            anchors.centerIn: parent
+                            width: testButton.pressed ? parent.width * 1.05 : (testButton.hovered ? parent.width : 0)
+                            height: testButton.pressed ? parent.height * 1.05 : (testButton.hovered ? parent.height : 0)
+                            radius: 22
+                            color: "#ffffff"
+                            opacity: testButton.pressed ? 0.2 : (testButton.hovered ? 0.15 : 0)
+                        }
+
+                        ParallelAnimation {
+                            id: clickAnimation
+                            running: false
+
+                            NumberAnimation {
+                                target: testButton.background
+                                property: "scale"
+                                from: 0.97
+                                to: 1.0
+                                duration: 200
+                                easing.type: Easing.OutBack
+                                easing.overshoot: 2.0
                             }
+
+                            NumberAnimation {
+                                target: glowEffect
+                                property: "opacity"
+                                from: 0.8
+                                to: 0.0
+                                duration: 700
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+
+                        Rectangle {
+                            id: glowEffect
+                            anchors.fill: parent
+                            radius: 22
+                            color: "transparent"
+                            border.width: 2
+                            border.color: Qt.lighter(appTheme.accentColor, 1.3)
+                            opacity: 0
                         }
 
                         layer.enabled: true
                         layer.effect: DropShadow {
                             transparentBorder: true
                             horizontalOffset: 0
-                            verticalOffset: 3
-                            radius: 8.0
+                            verticalOffset: testButton.pressed ? 1 : 3
+                            radius: testButton.pressed ? 4.0 : 8.0
                             samples: 17
                             color: "#40000000"
+                            Behavior on verticalOffset {
+                                NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
+                            }
+                            Behavior on radius {
+                                NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
+                            }
+                        }
+                    }
+
+                    states: [
+                        State {
+                            name: "pressed"
+                            when: testButton.pressed
+                            PropertyChanges {
+                                target: testButton.background
+                                scale: 0.97
+                            }
+                        }
+                    ]
+
+                    transitions: [
+                        Transition {
+                            from: ""; to: "pressed"
+                            ScaleAnimator {
+                                duration: 120
+                                easing.type: Easing.OutQuad
+                            }
+                        },
+                        Transition {
+                            from: "pressed"; to: ""
+                            ScaleAnimator {
+                                duration: 200
+                                easing.type: Easing.OutBack
+                                easing.overshoot: 2.0
+                            }
+                        }
+                    ]
+
+                    onPressed: {
+                        clickAnimation.stop()
+                    }
+
+                    onReleased: {
+                        if (containsMouse) {
+                            clickAnimation.start()
                         }
                     }
 
                     onClicked: {
                         applyResolutionSettings()
-
                         var timer = Qt.createQmlObject('import QtQml 2.12; Timer {interval: 5000; repeat: false; running: true;}',
                             screenSettingsView, "revertTimer");
-
                         timer.triggered.connect(function() {
                             if (mainWindow && mainWindow.visibility === Window.FullScreen) {
                                 mainWindow.visibility = Window.Windowed
@@ -783,53 +895,6 @@ Item {
                                 gameWindow.visibility = Window.Windowed
                             }
                         });
-                    }
-                }
-
-                Button {
-                    id: applyButton
-                    text: translations.t("applyDisplaySettings")
-                    hoverEnabled: true
-
-                    contentItem: Text {
-                        text: parent.text
-                        font {
-                            family: "Inter"
-                            pixelSize: 16
-                            weight: Font.DemiBold
-                        }
-                        color: "#ffffff"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-
-                    background: Rectangle {
-                        implicitWidth: 240
-                        implicitHeight: 44
-                        radius: 22
-                        color: applyButton.pressed ? Qt.darker(appTheme.accentColor, 1.2) :
-                               applyButton.hovered ? Qt.lighter(appTheme.accentColor, 1.1) : appTheme.accentColor
-
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 150
-                            }
-                        }
-
-                        layer.enabled: true
-                        layer.effect: DropShadow {
-                            transparentBorder: true
-                            horizontalOffset: 0
-                            verticalOffset: 3
-                            radius: 8.0
-                            samples: 17
-                            color: "#40000000"
-                        }
-                    }
-
-                    onClicked: {
-                        applyResolutionSettings()
-                        applyScreenSettings()
                     }
                 }
             }

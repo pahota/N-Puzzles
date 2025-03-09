@@ -18,11 +18,17 @@ Window {
     property int themeIndex: 0
     property bool isEnglish: true
     property bool settingsChanged: false
+    property bool savedBackgroundMusicEnabled: true
+    property int savedVolume: 75
+    property string savedSelectedMusic: "Relaxing"
 
     Settings {
         id: savedSettings
         property int savedTheme: 0
         property bool savedLanguage: true
+        property bool savedBackgroundMusicEnabled: true
+        property int savedVolume: 75
+        property string savedSelectedMusic: "Relaxing"
 
         Component.onCompleted: {
             themeIndex = savedTheme
@@ -169,7 +175,7 @@ Window {
                 text: translations.t("settings")
                 font {
                     family: "Inter"
-                    pixelSize: 30
+                    pixelSize: 28
                     weight: Font.Bold
                 }
                 color: "#FFFFFF"
@@ -272,7 +278,6 @@ Window {
                 }
             }
         }
-
         Item {
             id: contentArea
             anchors {
@@ -296,7 +301,7 @@ Window {
                 ColumnLayout {
                     id: mainContent
                     width: contentArea.width
-                    spacing: 20
+                    spacing: 24
                     opacity: 0
 
                     SequentialAnimation {
@@ -313,29 +318,30 @@ Window {
                     }
 
                     Text {
-                        Layout.alignment: Qt.AlignHCenter
+                        Layout.alignment: Qt.AlignCenter
                         text: translations.t("themeSelection")
                         font {
                             family: "Inter"
-                            pixelSize: 26
+                            pixelSize: 24
                             weight: Font.DemiBold
                         }
                         color: appTheme.textColor
                     }
-
                     GridLayout {
                         id: themeGrid
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignHCenter
+                        Layout.leftMargin: 20
+                        Layout.rightMargin: 20
                         columns: 3
                         columnSpacing: 32
                         rowSpacing: 32
 
                         Repeater {
                             model: [
-                                {name: "light", icon: "🌞", description: "cleanBright"},
-                                {name: "dark", icon: "🌙", description: "easyEyes"},
-                                {name: "colorful", icon: "🎨", description: "vibrantFun"}
+                                {name: "light", icon: "🌞", description: "cleanBright", glowColor: Qt.rgba(0, 0.6, 0, 0.35)},
+                                {name: "dark", icon: "🌙", description: "easyEyes", glowColor: Qt.rgba(0, 0.6, 0, 0.35)},
+                                {name: "colorful", icon: "🎨", description: "vibrantFun", glowColor: Qt.rgba(0, 0.8, 0.8, 0.35)}
                             ]
 
                             delegate: Item {
@@ -344,6 +350,21 @@ Window {
                                 Layout.preferredHeight: 200
 
                                 property bool isSelected: settingsWindow.themeIndex === index
+                                property color themeGlowColor: modelData.glowColor
+
+                                function resetCardState() {
+                                    themeCard.scale = 1.0
+                                    themeCard.rotation = 0
+                                    cardShadow.width = themeCard.width + 12
+                                    cardShadow.height = themeCard.height + 12
+                                    cardShadow.color = themeItem.isSelected ? themeGlowColor : Qt.rgba(0, 0, 0, 0.15)
+                                }
+
+                                onIsSelectedChanged: {
+                                    if (!isSelected) {
+                                        resetCardState()
+                                    }
+                                }
 
                                 SequentialAnimation {
                                     running: true
@@ -376,9 +397,7 @@ Window {
                                     width: themeCard.width + 12
                                     height: themeCard.height + 12
                                     radius: 22
-                                    color: themeItem.isSelected ?
-                                        Qt.rgba(appTheme.accentColor.r, appTheme.accentColor.g, appTheme.accentColor.b, 0.35) :
-                                        Qt.rgba(0, 0, 0, 0.15)
+                                    color: themeItem.isSelected ? themeGlowColor : Qt.rgba(0, 0, 0, 0.15)
                                     z: -1
 
                                     Behavior on color {
@@ -407,7 +426,9 @@ Window {
                                         anchors.fill: parent
                                         radius: 20
                                         color: "transparent"
-                                        border.color: appTheme.accentColor
+                                        border.color: modelData.name === "colorful" ?
+                                            Qt.rgba(0, 0.8, 0.8, 1.0) :
+                                            Qt.rgba(0, 0.6, 0, 1.0)
                                         border.width: 2
 
                                         Rectangle {
@@ -415,7 +436,9 @@ Window {
                                             width: 12
                                             height: 12
                                             radius: 6
-                                            color: appTheme.accentColor
+                                            color: modelData.name === "colorful" ?
+                                                Qt.rgba(0, 0.8, 0.8, 1.0) :
+                                                Qt.rgba(0, 0.6, 0, 1.0)
                                             anchors.right: parent.right
                                             anchors.top: parent.top
                                             anchors.margins: 12
@@ -494,7 +517,9 @@ Window {
                                             ColorAnimation {
                                                 target: cardShadow
                                                 property: "color"
-                                                to: Qt.rgba(appTheme.accentColor.r, appTheme.accentColor.g, appTheme.accentColor.b, 0.25)
+                                                to: modelData.name === "colorful" ?
+                                                    Qt.rgba(0, 0.8, 0.8, 0.25) :
+                                                    Qt.rgba(0, 0.6, 0, 0.25)
                                                 duration: 200
                                             }
                                         }
@@ -525,9 +550,7 @@ Window {
                                             ColorAnimation {
                                                 target: cardShadow
                                                 property: "color"
-                                                to: themeItem.isSelected ?
-                                                    Qt.rgba(appTheme.accentColor.r, appTheme.accentColor.g, appTheme.accentColor.b, 0.35) :
-                                                    Qt.rgba(0, 0, 0, 0.15)
+                                                to: themeItem.isSelected ? themeGlowColor : Qt.rgba(0, 0, 0, 0.15)
                                                 duration: 200
                                             }
                                         }
@@ -584,51 +607,61 @@ Window {
                                         width: parent.width - 40
                                         spacing: 16
 
-                                        Text {
-                                            id: themeIcon
-                                            text: modelData.icon
-                                            font.pixelSize: 48
+                                        Item {
                                             Layout.alignment: Qt.AlignHCenter
                                             Layout.topMargin: 10
+                                            width: 60
+                                            height: 60
 
-                                            SequentialAnimation {
-                                                running: themeItem.isSelected
-                                                loops: Animation.Infinite
-                                                alwaysRunToEnd: true
+                                            Text {
+                                                id: themeIcon
+                                                text: modelData.icon
+                                                font.pixelSize: 48
+                                                anchors.centerIn: parent
+                                                renderType: Text.QtRendering
+                                                layer.enabled: true
+                                                layer.smooth: true
+                                                antialiasing: true
 
-                                                ParallelAnimation {
-                                                    NumberAnimation {
-                                                        target: themeIcon
-                                                        property: "scale"
-                                                        to: 1.15
-                                                        duration: 1000
-                                                        easing.type: Easing.InOutQuad
-                                                    }
-                                                    RotationAnimation {
-                                                        target: themeIcon
-                                                        property: "rotation"
-                                                        from: -2
-                                                        to: 2
-                                                        duration: 1000
-                                                        easing.type: Easing.InOutQuad
-                                                    }
-                                                }
+                                                SequentialAnimation {
+                                                    running: themeItem.isSelected
+                                                    loops: Animation.Infinite
+                                                    alwaysRunToEnd: true
 
-                                                ParallelAnimation {
-                                                    NumberAnimation {
-                                                        target: themeIcon
-                                                        property: "scale"
-                                                        to: 1.0
-                                                        duration: 1000
-                                                        easing.type: Easing.InOutQuad
+                                                    ParallelAnimation {
+                                                        NumberAnimation {
+                                                            target: themeIcon
+                                                            property: "scale"
+                                                            to: 1.15
+                                                            duration: 1000
+                                                            easing.type: Easing.InOutQuad
+                                                        }
+                                                        RotationAnimation {
+                                                            target: themeIcon
+                                                            property: "rotation"
+                                                            from: -2
+                                                            to: 2
+                                                            duration: 1000
+                                                            easing.type: Easing.InOutQuad
+                                                        }
                                                     }
-                                                    RotationAnimation {
-                                                        target: themeIcon
-                                                        property: "rotation"
-                                                        from: 2
-                                                        to: -2
-                                                        duration: 1000
-                                                        easing.type: Easing.InOutQuad
+
+                                                    ParallelAnimation {
+                                                        NumberAnimation {
+                                                            target: themeIcon
+                                                            property: "scale"
+                                                            to: 1.0
+                                                            duration: 1000
+                                                            easing.type: Easing.InOutQuad
+                                                        }
+                                                        RotationAnimation {
+                                                            target: themeIcon
+                                                            property: "rotation"
+                                                            from: 2
+                                                            to: -2
+                                                            duration: 1000
+                                                            easing.type: Easing.InOutQuad
+                                                        }
                                                     }
                                                 }
                                             }
@@ -671,9 +704,128 @@ Window {
                             }
                         }
                     }
+
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.preferredHeight: 1
+                        Layout.leftMargin: 20
+                        Layout.rightMargin: 20
+                        Layout.topMargin: 5
+                        Layout.bottomMargin: 5
+                        color: appTheme.accentColor
+                        opacity: 0.2
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 15
+
+                        Text {
+                            text: translations.t("language")
+                            color: appTheme.textColor
+                            font {
+                                family: "Inter"
+                                pixelSize: 24
+                                weight: Font.DemiBold
+                            }
+                            Layout.leftMargin: 20
+                        }
+
+                        Item {
+                            width: 170
+                            height: 52
+                            Layout.alignment: Qt.AlignVCenter
+
+                            Rectangle {
+                                id: langButton
+                                anchors.fill: parent
+                                radius: 14
+                                color: appTheme.cardColor
+                                border.color: appTheme.accentColor
+                                border.width: 1
+
+                                Rectangle {
+                                    id: langButtonShadow
+                                    anchors.fill: parent
+                                    anchors.margins: -2
+                                    radius: 14
+                                    color: appTheme.shadowColor
+                                    z: -1
+                                }
+
+                                Rectangle {
+                                    id: langFlagContainer
+                                    width: 30
+                                    height: 30
+                                    radius: 15
+                                    anchors {
+                                        left: parent.left
+                                        leftMargin: 10
+                                        verticalCenter: parent.verticalCenter
+                                    }
+                                    color: "#FFFFFF"
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: settingsWindow.isEnglish ? "🇺🇸" : "🇷🇺"
+                                        font.pixelSize: 16
+                                    }
+                                }
+
+                                Text {
+                                    anchors {
+                                        left: langFlagContainer.right
+                                        leftMargin: 10
+                                        right: parent.right
+                                        rightMargin: 10
+                                        verticalCenter: parent.verticalCenter
+                                    }
+                                    text: settingsWindow.isEnglish ? "English" : "Русский"
+                                    color: appTheme.textColor
+                                    font {
+                                        family: "Inter"
+                                        pixelSize: 17
+                                        weight: Font.DemiBold
+                                    }
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    onClicked: {
+                                        settingsWindow.isEnglish = !settingsWindow.isEnglish
+                                        settingsChanged = true
+                                        langChangeAnimation.start()
+                                    }
+                                    onEntered: langButton.scale = 1.05
+                                    onExited: langButton.scale = 1.0
+                                }
+
+                                Behavior on scale {
+                                    NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
+                                }
+
+                                SequentialAnimation {
+                                    id: langChangeAnimation
+                                    NumberAnimation { target: langButton; property: "opacity"; to: 0.5; duration: 150 }
+                                    NumberAnimation { target: langButton; property: "opacity"; to: 1.0; duration: 150 }
+                                }
+                            }
+                        }
+
+                        Item {
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 1
+                        Layout.leftMargin: 20
+                        Layout.rightMargin: 20
+                        Layout.topMargin: 5
+                        Layout.bottomMargin: 5
                         color: appTheme.accentColor
                         opacity: 0.2
                     }
@@ -681,6 +833,8 @@ Window {
                     ScreenSettings {
                         id: screenSettings
                         Layout.fillWidth: true
+                        Layout.leftMargin: 20
+                        Layout.rightMargin: 20
                         themeIndex: settingsWindow.themeIndex
                         appTheme: settingsWindow.appTheme
                         mainWindow: window
@@ -694,117 +848,38 @@ Window {
                         }
                     }
 
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 1
+                        Layout.leftMargin: 20
+                        Layout.rightMargin: 20
+                        Layout.topMargin: 5
+                        Layout.bottomMargin: 5
+                        color: appTheme.accentColor
+                        opacity: 0.2
+                    }
+
                     Sound {
                         id: soundSettings
                         Layout.fillWidth: true
+                        Layout.leftMargin: 20
+                        Layout.rightMargin: 20
                         themeIndex: settingsWindow.themeIndex
+                        appTheme: settingsWindow.appTheme
                         audioController: settingsWindow.audioController
+                        backgroundMusicEnabled: savedSettings.savedBackgroundMusicEnabled
+                        volume: savedSettings.savedVolume
+                        selectedMusic: savedSettings.savedSelectedMusic
                         onApplySettings: {
+                            savedSettings.savedBackgroundMusicEnabled = backgroundMusicEnabled
+                            savedSettings.savedVolume = volume
+                            savedSettings.savedSelectedMusic = selectedMusic
                             settingsChanged = true
                         }
-                    }
-
-                    RowLayout {
-                        Layout.alignment: Qt.AlignHCenter
-                        spacing: 10
-
-                        ColumnLayout {
-                            spacing: 14
-
-                            Text {
-                                text: translations.t("language")
-                                color: appTheme.textColor
-                                font {
-                                    family: "Inter"
-                                    pixelSize: 20
-                                    weight: Font.DemiBold
-                                }
-                            }
-
-                            Item {
-                                width: 170
-                                height: 52
-
-                                Rectangle {
-                                    id: langButton
-                                    anchors.fill: parent
-                                    radius: 14
-                                    color: appTheme.cardColor
-                                    border.color: appTheme.accentColor
-                                    border.width: 1
-
-                                    Rectangle {
-                                        id: langButtonShadow
-                                        anchors.fill: parent
-                                        anchors.margins: -2
-                                        radius: 14
-                                        color: appTheme.shadowColor
-                                        z: -1
-                                    }
-
-                                    Rectangle {
-                                        id: langFlagContainer
-                                        width: 30
-                                        height: 30
-                                        radius: 15
-                                        anchors {
-                                            left: parent.left
-                                            leftMargin: 10
-                                            verticalCenter: parent.verticalCenter
-                                        }
-                                        color: "#FFFFFF"
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: settingsWindow.isEnglish ? "🇺🇸" : "🇷🇺"
-                                            font.pixelSize: 16
-                                        }
-                                    }
-
-                                    Text {
-                                        anchors {
-                                            left: langFlagContainer.right
-                                            leftMargin: 10
-                                            right: parent.right
-                                            rightMargin: 10
-                                            verticalCenter: parent.verticalCenter
-                                        }
-                                        text: settingsWindow.isEnglish ? "English" : "Русский"
-                                        color: appTheme.textColor
-                                        font {
-                                            family: "Inter"
-                                            pixelSize: 17
-                                            weight: Font.DemiBold
-                                        }
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                        onClicked: {
-                                            settingsWindow.isEnglish = !settingsWindow.isEnglish
-                                            settingsChanged = true
-                                            langChangeAnimation.start()
-                                        }
-                                        onEntered: langButton.scale = 1.05
-                                        onExited: langButton.scale = 1.0
-                                    }
-
-                                    Behavior on scale {
-                                        NumberAnimation { duration: 150; easing.type: Easing.OutCubic }
-                                    }
-
-                                    SequentialAnimation {
-                                        id: langChangeAnimation
-                                        NumberAnimation { target: langButton; property: "opacity"; to: 0.5; duration: 150 }
-                                        NumberAnimation { target: langButton; property: "opacity"; to: 1.0; duration: 150 }
-                                    }
-                                }
-                            }
+                        onSettingsValueChanged: {
+                            settingsWindow.settingsChanged = true
                         }
                     }
-
                     Item {
                         Layout.preferredHeight: 20
                     }
@@ -834,7 +909,7 @@ Window {
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: parent.width
                     radius: width / 2
-                    color: "#4CAF50"
+                    color: appTheme.accentColor
                     y: (contentFlickable.contentY / (contentFlickable.contentHeight - contentFlickable.height)) *
                        (contentFlickable.height - height)
                     height: Math.max(contentFlickable.height * 0.15, 30)
@@ -888,7 +963,7 @@ Window {
             anchors {
                 bottom: parent.bottom
                 horizontalCenter: parent.horizontalCenter
-                bottomMargin: 20
+                bottomMargin: 24
             }
             spacing: 28
             height: 52
@@ -934,6 +1009,9 @@ Window {
                         onClicked: {
                             savedSettings.savedTheme = themeIndex
                             savedSettings.savedLanguage = isEnglish
+                            savedSettings.savedBackgroundMusicEnabled = soundSettings.backgroundMusicEnabled
+                            savedSettings.savedVolume = soundSettings.volume
+                            savedSettings.savedSelectedMusic = soundSettings.selectedMusic
                             settingsChanged = false
                             saveAnimation.start()
                             themeChanged(themeIndex)
@@ -1021,11 +1099,18 @@ Window {
             text: translations.t("confirmExit")
             color: appTheme.textColor
             wrapMode: Text.WordWrap
+            font {
+                family: "Inter"
+                pixelSize: 14
+            }
         }
 
         onAccepted: {
             savedSettings.savedTheme = themeIndex
             savedSettings.savedLanguage = isEnglish
+            savedSettings.savedBackgroundMusicEnabled = soundSettings.backgroundMusicEnabled
+            savedSettings.savedVolume = soundSettings.volume
+            savedSettings.savedSelectedMusic = soundSettings.selectedMusic
             themeChanged(themeIndex)
             languageChanged(isEnglish)
             soundSettings.applyAudioSettings()

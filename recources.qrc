@@ -34,5 +34,10 @@
         <file>Img/sound.mp3</file>
         <file>Img/defaultAvatar.png</file>
         <file>Sounds/soundIntellect.mp3</file>
+        <file>Img/Icons/scoreIcons/scoreDark.svg</file>
+        <file>Img/Icons/scoreIcons/scoreLight.svg</file>
+        <file>Sounds/focus.mp3</file>
+        <file>Sounds/N_Puzzle!Music.mp3</file>
+        <file>Sounds/stress.mp3</file>
     </qresource>
 </RCC>

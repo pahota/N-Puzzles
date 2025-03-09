@@ -47,6 +47,13 @@ qt_add_qml_module(appTagGame
         QML_FILES ScreenSettings.qml
         QML_FILES Background.qml
         QML_FILES PauseButton.qml
+        QML_FILES Score.qml
+        SOURCES score.h
+        SOURCES score.cpp
+        QML_FILES DifficultyButton.qml
+        SOURCES gameboardmodel.h gameboardmodel.cpp
+        QML_FILES WinDialog.qml
+        QML_FILES Login.qml
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

@@ -3,59 +3,129 @@ import QtQuick.Controls 2.15
 import Qt5Compat.GraphicalEffects
 
 Rectangle {
-    id: button
-    width: 200
-    height: 50
-    radius: height / 4
-    color: theme.counterBackgroundColor
-    border { color: theme.tileBorderColor; width: 2 }
+    id: menuButton
 
     property string buttonText: "Button"
+    property string icon: ""
     property int themeIndex: 0
 
     signal clicked()
 
+    radius: height / 4
+    color: theme.buttonBackgroundColor
+    border {
+        color: mouseArea.containsMouse ? theme.accentColor : theme.highlightColor
+        width: 2
+    }
+
     layer.enabled: true
     layer.effect: DropShadow {
         transparentBorder: true
-        horizontalOffset: 3
-        verticalOffset: 3
+        horizontalOffset: 2
+        verticalOffset: 2
         radius: 8
-        samples: 16
-        color: "#66000000"
+        samples: 12
+        color: theme.shadowColor
     }
 
     MouseArea {
-        id: buttonArea
+        id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
-        onClicked: button.clicked()
+        onClicked: parent.clicked()
     }
 
-    Text {
-        id: buttonLabel
-        text: buttonText
-        color: theme.counterTextColor
-        font {
-            family: "Source Sans Pro"
-            pixelSize: parent.height * 0.4
-            bold: true
+    Rectangle {
+        id: buttonGlow
+        anchors.fill: parent
+        radius: parent.radius
+        color: "transparent"
+        opacity: mouseArea.containsMouse ? 1 : 0
+
+        layer.enabled: mouseArea.containsMouse
+        layer.effect: Glow {
+            radius: 6
+            samples: 12
+            color: Qt.rgba(theme.accentColor.r, theme.accentColor.g, theme.accentColor.b, 0.4)
+            spread: 0.2
         }
-        anchors.centerIn: parent
+
+        Behavior on opacity {
+            NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+        }
     }
 
-    states: State {
-        name: "hovered"
-        when: buttonArea.containsMouse
-        PropertyChanges { target: button; scale: 0.98 }
-        PropertyChanges { target: buttonLabel; color: theme.highlightColor }
+    Item {
+        anchors.fill: parent
+
+        Image {
+            id: buttonIcon
+            source: icon
+            width: menuButton.height * 0.6
+            height: width
+            anchors {
+                left: parent.left
+                leftMargin: menuButton.width * 0.15
+                verticalCenter: parent.verticalCenter
+            }
+            smooth: true
+            mipmap: true
+            fillMode: Image.PreserveAspectFit
+            visible: icon !== ""
+
+            ColorOverlay {
+                anchors.fill: parent
+                source: parent
+                color: mouseArea.containsMouse ? theme.highlightColor : themeIndex === 0 ? "#242424" : "#FFFFFF"
+                opacity: 1
+
+                Behavior on color {
+                    ColorAnimation { duration: 200; easing.type: Easing.OutCubic }
+                }
+            }
+        }
+
+        Text {
+            id: buttonText
+            text: menuButton.buttonText
+            color: mouseArea.containsMouse ? theme.highlightColor : themeIndex === 0 ? "#242424" : "#FFFFFF"
+            font {
+                family: "Source Sans Pro"
+                pixelSize: mouseArea.containsMouse ? menuButton.height * 0.4 : menuButton.height * 0.36
+                letterSpacing: 0.5
+            }
+            anchors.centerIn: parent
+
+            Behavior on font.pixelSize {
+                NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+            }
+
+            Behavior on color {
+                ColorAnimation { duration: 200; easing.type: Easing.OutCubic }
+            }
+        }
     }
 
-    transitions: Transition {
-        from: ""; to: "hovered"; reversible: true
-        ParallelAnimation {
-            NumberAnimation { properties: "scale"; duration: 200 }
-            ColorAnimation { properties: "color"; duration: 200 }
+    Behavior on color {
+        ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+    }
+
+    Behavior on border.color {
+        ColorAnimation { duration: 150; easing.type: Easing.OutCubic }
+    }
+
+    transform: Scale {
+        id: buttonScale
+        origin.x: menuButton.width/2
+        origin.y: menuButton.height/2
+        xScale: mouseArea.containsMouse ? 0.98 : 1.0
+        yScale: mouseArea.containsMouse ? 0.98 : 1.0
+
+        Behavior on xScale {
+            NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+        }
+        Behavior on yScale {
+            NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
         }
     }
 }
